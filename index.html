@@ -75,6 +75,16 @@
         <div class="profile-identity"><div class="eyebrow">ATUAÇÃO PÚBLICA</div><h2 id="profileName">Carregando perfil…</h2><p id="profileMeta">Consultando dados oficiais</p><a id="profileSource" href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Perfil na Câmara ↗</a></div>
         <div class="profile-summary"><span>REGISTROS NA LINHA DO TEMPO</span><strong id="timelineCount">—</strong><small>Itens retornados pelas consultas disponíveis</small></div>
       </div>
+      <section class="profile-metrics" aria-label="Indicadores parlamentares">
+        <div class="profile-metric-heading"><div><div class="eyebrow">INDICADORES DE FISCALIZAÇÃO</div><h2>Presença e destinação de recursos</h2></div><span class="metric-source-label">DADOS OFICIAIS · COM RESSALVAS</span></div>
+        <div class="profile-metric-grid">
+          <article class="profile-metric-card"><span>ASSIDUIDADE EM SESSÕES</span><strong id="profileAttendance">Não calculada</strong><small id="profileAttendanceNote">A frequência exige consulta ao serviço oficial de sessões e validação da matrícula parlamentar.</small><a href="https://www2.camara.leg.br/transparencia/dados-abertos/dados-abertos-legislativo/webservices/sessoesreunioes-2/listarpresencasparlamentar" target="_blank" rel="noopener">Fonte metodológica ↗</a></article>
+          <article class="profile-metric-card"><span>EMENDAS PIX</span><strong id="profilePixTotal">Consulta externa</strong><small id="profilePixNote">Valores e pagamentos dependem dos registros de execução orçamentária e da identificação do autor.</small><a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Consultar emendas ↗</a></article>
+          <article class="profile-metric-card"><span>EMENDAS PARLAMENTARES</span><strong id="profileAmendmentTotal">Consulta externa</strong><small id="profileAmendmentNote">A consolidação por parlamentar requer integração segura com a base de emendas.</small><a href="https://especial.camara.leg.br/orcamento-aberto/" target="_blank" rel="noopener">Orçamento Aberto ↗</a></article>
+        </div>
+        <div class="data-integrity-alert"><strong>Nota de transparência:</strong> estes indicadores não recebem valores estimados. A API REST usada pelo painel não fornece diretamente um percentual completo de presença plenária nem a execução individual das emendas. Os dados serão exibidos quando houver integração verificável com as fontes específicas.</div>
+      </section>
+      <section class="profile-amendments"><div class="profile-metric-heading"><div><div class="eyebrow">DESTINAÇÃO E EXECUÇÃO</div><h2>Emendas parlamentares</h2></div><a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Portal da Transparência ↗</a></div><div id="profileAmendmentsList" class="amendment-empty">A consulta detalhada por município, órgão beneficiado, valor empenhado, liquidado e pago depende da integração autenticada do Portal da Transparência. Nenhuma destinação será inferida sem registro de origem.</div></section>
       <div class="timeline-toolbar"><div><div class="eyebrow">ACOMPANHAMENTO CRONOLÓGICO</div><h2>Linha do tempo</h2><p>Atividades e registros públicos organizados por data, com acesso às fontes oficiais.</p></div><label class="timeline-filter">Tipo de registro<select id="timelineFilter"><option value="todos">Todos os registros</option><option value="evento">Eventos</option><option value="discurso">Discursos</option><option value="despesa">Despesas</option></select></label></div>
       <div id="timelineList" class="timeline-list"><div class="empty-state">Carregando atividade parlamentar…</div></div>
       <div class="timeline-footnote">A linha do tempo reúne registros retornados pela API de Dados Abertos da Câmara. A ausência de um item não significa necessariamente que a atividade não ocorreu; depende dos dados e endpoints disponíveis.</div>
@@ -86,13 +96,17 @@
         <div><div class="eyebrow">ANÁLISE COMPARATIVA</div><h2>Compare a atuação parlamentar</h2><p>Selecione dois deputados para analisar despesas e produção legislativa com base nos registros oficiais.</p></div>
         <span class="comparison-source">CÂMARA DOS DEPUTADOS · API OFICIAL</span>
       </div>
-      <div class="comparison-controls">
-        <label>Parlamentar 1<select id="compareDeputyA"><option value="">Selecione um deputado</option></select></label>
-        <div class="versus">×</div>
-        <label>Parlamentar 2<select id="compareDeputyB"><option value="">Selecione um deputado</option></select></label>
+      <div class="comparison-scope">
+        <div class="scope-switch" role="group" aria-label="Escopo da comparação"><button type="button" class="scope-option active" data-scope="national" aria-pressed="true">Âmbito nacional</button><button type="button" class="scope-option" data-scope="state" aria-pressed="false">Meu Estado</button></div>
+        <label class="state-select-wrap">Estado de referência<select id="compareState" aria-label="Estado de referência"><option value="">Escolha seu estado</option></select></label>
+        <span class="scope-hint" id="scopeHint">Exibindo parlamentares de todos os estados.</span>
+      </div>
+      <div class="comparison-controls comparison-picker-grid">
+        <div class="candidate-picker" data-picker="A"><label for="compareSearchA">Parlamentar 1</label><div class="candidate-search"><span>⌕</span><input id="compareSearchA" type="search" autocomplete="off" placeholder="Digite o nome do parlamentar"><button type="button" class="clear-picker" data-clear="A" aria-label="Limpar seleção">×</button></div><label class="party-filter" for="comparePartyA">Filtrar por partido<select id="comparePartyA"><option value="">Todos os partidos</option></select></label><div id="compareResultsA" class="candidate-results" role="listbox" aria-label="Resultados para parlamentar 1"></div><select id="compareDeputyA" class="visually-hidden" tabindex="-1" aria-hidden="true"><option value="">Selecione um deputado</option></select></div>
+        <div class="versus">VS</div>
+        <div class="candidate-picker" data-picker="B"><label for="compareSearchB">Parlamentar 2</label><div class="candidate-search"><span>⌕</span><input id="compareSearchB" type="search" autocomplete="off" placeholder="Digite o nome do parlamentar"><button type="button" class="clear-picker" data-clear="B" aria-label="Limpar seleção">×</button></div><label class="party-filter" for="comparePartyB">Filtrar por partido<select id="comparePartyB"><option value="">Todos os partidos</option></select></label><div id="compareResultsB" class="candidate-results" role="listbox" aria-label="Resultados para parlamentar 2"></div><select id="compareDeputyB" class="visually-hidden" tabindex="-1" aria-hidden="true"><option value="">Selecione um deputado</option></select></div>
         <label class="comparison-metric-label">Indicador<select id="compareMetric"><option value="expenses">Gastos da cota parlamentar</option><option value="proposals">Proposições apresentadas e situação</option></select></label>
-        <label id="compareYearWrap"><span id="compareYearLabel">Ano da despesa</span><select id="compareYear"></select></label>
-        <button id="compareBtn" type="button">Comparar dados</button>
+        <label id="compareYearWrap"><span id="compareYearLabel">Ano da despesa</span><select id="compareYear"></select></label><button id="compareBtn" type="button">Comparar dados</button>
       </div>
       <div id="comparisonResults" class="comparison-results" aria-live="polite">
         <div class="comparison-placeholder"><span>↔</span><strong>Escolha dois parlamentares</strong><p>O resultado aparecerá aqui, com valores, diferenças e gráfico comparativo.</p></div>
