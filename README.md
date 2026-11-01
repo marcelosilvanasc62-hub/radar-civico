@@ -68,3 +68,26 @@ Os resultados são gravados em `m0_resultados/`.
 3. Criar páginas de detalhe para parlamentares, proposições e votações.
 4. Implementar histórico, filtros e metodologia dos indicadores.
 5. Planejar backend e rotina de atualização sem sobrecarregar a API.
+
+
+## Fontes oficiais e arquitetura de integração
+
+A interface mantém a Câmara dos Deputados como fonte atualmente consultada. Integrações adicionais devem ser implementadas como adaptadores independentes, sem misturar campos de origem diferente:
+
+| Fonte | Escopo documentado | Situação no projeto |
+|---|---|---|
+| [Câmara — Dados Abertos](https://dadosabertos.camara.leg.br/swagger/api.html) | Deputados, proposições, votações e CEAP | Em uso |
+| [Senado — Dados Abertos](https://www12.senado.leg.br/dados-abertos) | Senadores, matérias, plenário, cotas e orçamento | Planejada |
+| [Portal da Transparência — API](https://api.portaldatransparencia.gov.br/) | Emendas, documentos, despesas e favorecidos | Planejada |
+| [TCU — Webservices](https://sites.tcu.gov.br/dados-abertos/webservices-tcu/) | Acórdãos, processos e dados de controle externo | Planejada |
+
+### Contrato mínimo para cada integração
+
+- Identificador estável da pessoa, órgão, proposição ou registro financeiro.
+- Fonte e URL original do registro.
+- Data/hora da consulta e período de referência.
+- Unidade, moeda e definição do campo.
+- Paginação, limites, erros e cobertura documentados.
+- Regras de conciliação explícitas antes de cruzar bases.
+
+O produto prioriza registros descritivos individuais e documentação de metodologia. Não publica notas, rankings, alinhamento partidário calculado, médias comparativas ou classificações de agentes políticos. Dados ausentes permanecem identificados como não disponíveis.
