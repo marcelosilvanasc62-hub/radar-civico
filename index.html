@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101c2d">
+  <meta name="description" content="Radar Cívico — acompanhe dados públicos da atividade parlamentar brasileira.">
+  <title>Radar Cívico | Transparência em movimento</title>
+  <link rel="preconnect" href="https://dadosabertos.camara.leg.br">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Radar Cívico - início">
+      <span class="brand-mark">RC</span>
+      <span><strong>RADAR CÍVICO</strong><small>TRANSPARÊNCIA EM MOVIMENTO</small></span>
+    </a>
+    <nav class="topnav" aria-label="Navegação principal">
+      <a class="active" href="#visao-geral">Visão geral</a>
+      <a href="#parlamentares">Parlamentares</a>
+      <a href="#proposicoes">Proposições</a>
+      <a href="#votacoes">Votações</a>
+    </nav>
+    <div class="top-actions">
+      <span class="live-dot"></span><span class="live-label">DADOS PÚBLICOS</span>
+      <button id="refreshBtn" class="refresh-btn" type="button" title="Atualizar dados">↻ <span>Atualizar</span></button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero" id="visao-geral">
+      <div class="hero-copy">
+        <div class="eyebrow"><span></span> MONITORAMENTO LEGISLATIVO</div>
+        <h1>O que acontece<br><em>em Brasília</em> importa.</h1>
+        <p>Acompanhe a atividade parlamentar com dados públicos, fontes verificáveis e contexto para entender as decisões que afetam o país.</p>
+        <a class="hero-link" href="#parlamentares">Explorar dados <span>→</span></a>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="radar-center"><span>RC</span></div>
+        <span class="radar-point point-a"></span><span class="radar-point point-b"></span><span class="radar-point point-c"></span>
+        <div class="visual-label label-a">DADOS ABERTOS <b>●</b></div>
+        <div class="visual-label label-b">ACOMPANHAMENTO <b>●</b></div>
+      </div>
+    </section>
+
+    <section class="section-heading">
+      <div><div class="eyebrow">PAINEL EM TEMPO REAL</div><h2>Visão geral</h2></div>
+      <div class="updated">Última consulta <strong id="updatedAt">aguardando dados…</strong></div>
+    </section>
+
+    <section class="stats-grid" aria-label="Indicadores da amostra consultada">
+      <article class="stat-card"><div class="stat-top"><span>DEPUTADOS CONSULTADOS</span><span class="stat-icon">♙</span></div><strong id="deputyCount">—</strong><small>Registros retornados pela API</small></article>
+      <article class="stat-card"><div class="stat-top"><span>PARTIDOS IDENTIFICADOS</span><span class="stat-icon">◈</span></div><strong id="partyCount">—</strong><small>Na amostra de parlamentares</small></article>
+      <article class="stat-card"><div class="stat-top"><span>PROPOSIÇÕES RECENTES</span><span class="stat-icon">▤</span></div><strong id="proposalCount">—</strong><small>Registros consultados</small></article>
+      <article class="stat-card"><div class="stat-top"><span>VOTAÇÕES RETORNADAS</span><span class="stat-icon">✓</span></div><strong id="voteCount">—</strong><small>Registros consultados</small></article>
+    </section>
+
+    <section class="content-grid">
+      <section class="panel" id="parlamentares">
+        <div class="panel-heading"><div><div class="eyebrow">REPRESENTAÇÃO</div><h2>Parlamentares</h2></div><a href="#parlamentares" class="subtle-link">Dados da Câmara ↗</a></div>
+        <form id="searchForm" class="search-form">
+          <span>⌕</span><input id="deputySearch" type="search" placeholder="Buscar deputado por nome…" aria-label="Buscar deputado por nome"><button type="submit">Buscar</button>
+        </form>
+        <div id="deputyList" class="deputy-list"><div class="empty-state">Consultando dados oficiais…</div></div>
+        <div class="panel-foot"><span id="deputyFoot">Amostra de parlamentares</span><a href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Fonte oficial ↗</a></div>
+      </section>
+
+      <section class="panel" id="proposicoes">
+        <div class="panel-heading"><div><div class="eyebrow">PRODUÇÃO LEGISLATIVA</div><h2>Proposições recentes</h2></div><span class="panel-count" id="proposalBadge">—</span></div>
+        <div id="proposalList" class="activity-list"><div class="empty-state">Consultando proposições…</div></div>
+        <div class="panel-foot"><span>Consulta à API de Dados Abertos</span><a href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Ver fonte ↗</a></div>
+      </section>
+    </section>
+
+    <section class="panel votes-panel" id="votacoes">
+      <div class="panel-heading"><div><div class="eyebrow">DECISÕES PARLAMENTARES</div><h2>Votações recentes</h2></div><span class="panel-count" id="voteBadge">—</span></div>
+      <div id="voteList" class="vote-list"><div class="empty-state">Consultando votações…</div></div>
+      <div class="panel-foot"><span>Os registros exibidos correspondem à resposta atual da API.</span><a href="https://dadosabertos.camara.leg.br/api/v2/votacoes" target="_blank" rel="noopener">Endpoint consultado ↗</a></div>
+    </section>
+
+    <section class="methodology">
+      <div class="method-icon">i</div>
+      <div><strong>Compromisso com a transparência</strong><p>Este painel consulta diretamente a API oficial de Dados Abertos da Câmara dos Deputados. Os números representam apenas os registros retornados nesta consulta — não são totais oficiais da legislatura. Indisponibilidade da API pode impedir a atualização.</p></div>
+      <a href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Conheça a fonte ↗</a>
+    </section>
+  </main>
+
+  <footer><span>© 2026 Radar Cívico</span><span>Independente • Apartidário • Baseado em dados públicos</span><a href="https://github.com/marcelosilvanasc62-hub/radar-civico" target="_blank" rel="noopener">Código aberto no GitHub ↗</a></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
