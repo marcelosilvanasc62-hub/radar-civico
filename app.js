@@ -26,7 +26,7 @@ function escapeHtml(value) {
 function renderDeputies(items) {
   const host = $('deputyList');
   if (!items.length) { host.innerHTML = '<div class="empty-state">Nenhum parlamentar encontrado nesta consulta.</div>'; return; }
-  host.innerHTML = items.map(d => {
+  host.innerHTML = items.slice(0, 12).map(d => {
     const initials = (d.nome || '??').split(' ').slice(0,2).map(x => x[0]).join('').toUpperCase();
     const photo = d.urlFoto ? '<img class="avatar" src="' + safeUrl(d.urlFoto) + '" alt="" loading="lazy">' : '<span class="avatar avatar-fallback">' + initials + '</span>';
     return '<div class="deputy-item"><button class="deputy-open" type="button" data-deputy-id="' + Number(d.id) + '" aria-label="Abrir perfil de ' + escapeHtml(d.nome || 'parlamentar') + '">' + photo + '<span class="person"><strong>' + escapeHtml(d.nome || 'Nome não informado') + '</strong><small>' + escapeHtml(d.siglaUf || '—') + ' · ' + escapeHtml(d.siglaPartido || 'Partido não informado') + '</small></span></button><span class="party-tag">' + escapeHtml(d.siglaPartido || '—') + '</span></div>';
@@ -109,7 +109,7 @@ async function openDeputyProfile(id) {
 async function loadDashboard() {
   $('refreshBtn').disabled = true; $('refreshBtn').textContent = '↻ Consultando…';
   const tasks = await Promise.allSettled([
-    api('deputados?ordem=ASC&ordenarPor=nome&itens=12'),
+    api('deputados?ordem=ASC&ordenarPor=nome&itens=100'),
     api('proposicoes?ordem=DESC&ordenarPor=id&itens=7'),
     api('votacoes?ordem=DESC&ordenarPor=dataHoraRegistro&itens=8')
   ]);
@@ -158,4 +158,114 @@ $('deputyList').addEventListener('click', event => {
 });
 $('backToDashboard').addEventListener('click', () => setDashboardVisible(true));
 $('timelineFilter').addEventListener('change', renderTimeline);
-loadDashboard();
+
+function money(value) {
+  return Number(value || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+function fillComparisonDeputies() {
+  const options = state.deputies.map(d => '<option value="' + Number(d.id) + '">' + escapeHtml(d.nome) + ' — ' + escapeHtml(d.siglaUf || '') + '/' + escapeHtml(d.siglaPartido || '') + '</option>').join('');
+  ['compareDeputyA','compareDeputyB'].forEach(id => { $(id).innerHTML = '<option value="">Selecione um deputado</option>' + options; });
+  if (state.deputies.length > 1) { $('compareDeputyA').value = String(state.deputies[0].id); $('compareDeputyB').value = String(state.deputies[1].id); }
+}
+function populateYears() {
+  const year = new Date().getFullYear();
+  $('compareYear').innerHTML = Array.from({length:7},(_,i)=>year-i).map(y=>'<option value="'+y+'">'+y+'</option>').join('');
+}
+async function fetchAllPages(path, maxPages=10) {
+  const all=[];
+  for(let page=1;page<=maxPages;page++){
+    const separator=path.includes('?')?'&':'?';
+    const result=await api(path+separator+'pagina='+page+'&itens=100');
+    const rows=result.dados||[];
+    all.push(...rows);
+    if(rows.length<100) break;
+  }
+  return all;
+}
+async function getExpenseTotal(id,year) {
+  const rows=await fetchAllPages('deputados/'+id+'/despesas?ano='+year+'&ordem=ASC&ordenarPor=ano');
+  const total=rows.reduce((sum,row)=>sum+Number(row.valorLiquido ?? row.valorDocumento ?? 0),0);
+  return {total,records:rows.length,rows};
+}
+async function getProposalStats(id) {
+  const rows=await fetchAllPages('proposicoes?idDeputadoAutor='+id+'&ordem=DESC&ordenarPor=ano',5);
+  const checked=rows.slice(0,40);
+  const statuses=[];
+  for(let i=0;i<checked.length;i+=8){
+    const batch=await Promise.allSettled(checked.slice(i,i+8).map(p=>api('proposicoes/'+p.id)));
+    batch.forEach((result,index)=>{
+      if(result.status==='fulfilled'){
+        const item=result.value.dados||{};
+        const status=item.statusProposicao||{};
+        statuses.push({proposal:checked[i+index],status:status.descricaoSituacao||'Situação não informada'});
+      }
+    });
+  }
+  const approved=statuses.filter(x=>/aprovad/i.test(x.status));
+  return {presented:rows.length,checked:statuses.length,approved:approved.length,items:statuses,limited:rows.length>=500};
+}
+function comparisonPersonCard(deputy,value,label,photo) {
+  return '<article class="comparison-person"><div class="comparison-person-head">'+(photo?'<img src="'+safeUrl(photo)+'" alt="" loading="lazy">':'')+'<div><strong>'+escapeHtml(deputy.nome)+'</strong><small>'+escapeHtml([deputy.siglaPartido,deputy.siglaUf].filter(Boolean).join(' · '))+'</small></div></div><div class="comparison-value">'+value+'</div><div class="comparison-caption">'+label+'</div></article>';
+}
+function renderComparisonChart(aName,bName,aValue,bValue,formatter,title) {
+  const max=Math.max(aValue,bValue,1);
+  const widthA=Math.max(aValue===0?0:2,aValue/max*100);
+  const widthB=Math.max(bValue===0?0:2,bValue/max*100);
+  return '<div class="comparison-chart"><div class="comparison-chart-title">'+title+'</div>'+
+    '<div class="chart-row"><div class="chart-name">'+escapeHtml(aName)+'</div><div class="chart-track"><div class="chart-bar" style="width:'+widthA+'%"></div></div><div class="chart-number">'+formatter(aValue)+'</div></div>'+
+    '<div class="chart-row"><div class="chart-name">'+escapeHtml(bName)+'</div><div class="chart-track"><div class="chart-bar" style="width:'+widthB+'%"></div></div><div class="chart-number">'+formatter(bValue)+'</div></div></div>';
+}
+async function runComparison() {
+  const idA=Number($('compareDeputyA').value),idB=Number($('compareDeputyB').value);
+  const metric=$('compareMetric').value,year=Number($('compareYear').value);
+  if(!idA||!idB||idA===idB){showToast('Selecione dois parlamentares diferentes.');return;}
+  const a=state.deputies.find(d=>Number(d.id)===idA),b=state.deputies.find(d=>Number(d.id)===idB);
+  $('compareBtn').disabled=true;$('compareBtn').textContent='Consultando…';
+  $('comparisonResults').innerHTML='<div class="comparison-loading">Consultando registros oficiais. Isso pode levar alguns segundos…</div>';
+  try {
+    if(metric==='expenses'){
+      const [ra,rb]=await Promise.all([getExpenseTotal(idA,year),getExpenseTotal(idB,year)]);
+      const difference=Math.abs(ra.total-rb.total),higher=ra.total>=rb.total?a:b;
+      $('comparisonResults').innerHTML='<div class="comparison-summary">'+
+        comparisonPersonCard(a,money(ra.total),'Total líquido identificado · '+ra.records+' registros',a.urlFoto)+
+        comparisonPersonCard(b,money(rb.total),'Total líquido identificado · '+rb.records+' registros',b.urlFoto)+'</div>'+
+        renderComparisonChart(a.nome,b.nome,ra.total,rb.total,money,'Despesas declaradas em '+year)+
+        '<div class="comparison-difference"><strong>'+escapeHtml(higher.nome)+'</strong> apresenta '+money(difference)+' a mais em despesas registradas neste recorte. A comparação considera os registros retornados pela API para '+year+'; valores podem sofrer atualização ou glosa.</div>';
+    } else {
+      const [ra,rb]=await Promise.all([getProposalStats(idA),getProposalStats(idB)]);
+      $('comparisonResults').innerHTML='<div class="comparison-summary">'+
+        comparisonPersonCard(a,ra.presented.toLocaleString('pt-BR'),'Proposições encontradas como autoria',a.urlFoto)+
+        comparisonPersonCard(b,rb.presented.toLocaleString('pt-BR'),'Proposições encontradas como autoria',b.urlFoto)+'</div>'+
+        renderComparisonChart(a.nome,b.nome,ra.presented,rb.presented,v=>v.toLocaleString('pt-BR'),'Proposições localizadas na API')+
+        '<div class="comparison-difference">Situação consultada individualmente em até 40 proposições por parlamentar: <strong>'+escapeHtml(a.nome)+': '+ra.approved+' aprovadas entre '+ra.checked+' verificadas</strong>; <strong>'+escapeHtml(b.nome)+': '+rb.approved+' aprovadas entre '+rb.checked+' verificadas</strong>. A contagem de aprovação é parcial e não deve ser interpretada como total histórico.</div>'+
+        '<details class="comparison-detail-list"><summary>Ver situações verificadas</summary><ul>'+ra.items.slice(0,12).map(x=>'<li>'+escapeHtml(x.proposal.siglaTipo+' '+x.proposal.numero+'/'+x.proposal.ano)+' — '+escapeHtml(x.status)+'</li>').join('')+
+        rb.items.slice(0,12).map(x=>'<li>'+escapeHtml(x.proposal.siglaTipo+' '+x.proposal.numero+'/'+x.proposal.ano)+' — '+escapeHtml(x.status)+'</li>').join('')+'</ul></details>';
+    }
+  } catch(error) {
+    $('comparisonResults').innerHTML='<div class="empty-state error-state">Não foi possível concluir a comparação. A API pode estar indisponível ou ter limitado a consulta. Tente novamente.</div>';
+    showToast('Falha ao consultar os dados para comparação.');
+  } finally {$('compareBtn').disabled=false;$('compareBtn').textContent='Comparar dados';}
+}
+function initTheme() {
+  const saved=localStorage.getItem('radar-theme');
+  const dark=saved?saved==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.body.classList.toggle('dark-theme',dark);
+  updateThemeButton();
+  $('themeToggle').addEventListener('click',()=>{
+    const next=!document.body.classList.contains('dark-theme');
+    document.body.classList.toggle('dark-theme',next);
+    localStorage.setItem('radar-theme',next?'dark':'light');
+    updateThemeButton();
+  });
+}
+function updateThemeButton() {
+  const dark=document.body.classList.contains('dark-theme');
+  $('themeToggle').innerHTML='<span class="theme-icon">'+(dark?'☀':'☾')+'</span><span class="theme-text">'+(dark?'Tema claro':'Tema escuro')+'</span>';
+  $('themeToggle').setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo noturno');
+}
+$('compareMetric').addEventListener('change',()=>{$('compareYearWrap').hidden=$('compareMetric').value!=='expenses';});
+$('compareBtn').addEventListener('click',runComparison);
+
+initTheme();
+populateYears();
+loadDashboard().then(fillComparisonDeputies);
