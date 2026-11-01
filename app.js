@@ -220,18 +220,22 @@ function populateYears() {
   const year = new Date().getFullYear();
   $('compareYear').innerHTML = Array.from({length:7},(_,i)=>year-i).map(y=>'<option value="'+y+'">'+y+'</option>').join('');
 }
-async function fetchAllPages(path,maxPages=20,pageSize=100) {
-  const all=[];
-  for(let page=1;page<=maxPages;page++){
+async function fetchAllPages(path,maxPages=100,pageSize=100) {
+  const byId=new Map(); let page=1, complete=false;
+  while(page<=maxPages){
     const separator=path.includes('?')?'&':'?';
     let result;
     try { result=await api(path+separator+'pagina='+page+'&itens='+pageSize); }
-    catch(error) { if(all.length)return {rows:all,complete:false}; throw error; }
+    catch(error) { if(byId.size)return {rows:[...byId.values()],complete:false,pages:page-1,error}; throw error; }
     const rows=result.dados||[];
-    all.push(...rows);
-    if(rows.length<pageSize)return {rows:all,complete:true};
+    rows.forEach((row,index)=>byId.set(row.id??(page+'-'+index),row));
+    const hasNext=Array.isArray(result.links)&&result.links.some(link=>link.rel==='next');
+    if(!hasNext && rows.length<pageSize){complete=true;break;}
+    if(!hasNext && rows.length===0){complete=true;break;}
+    if(!hasNext && rows.length<pageSize){complete=true;break;}
+    page++;
   }
-  return {rows:all,complete:false};
+  return {rows:[...byId.values()],complete,pages:Math.min(page,maxPages)};
 }
 async function getExpenseTotal(id,year) {
   const result=await fetchAllPages('deputados/'+id+'/despesas?ano='+year+'&ordem=ASC&ordenarPor=ano',20,50);
@@ -299,7 +303,7 @@ async function runComparison() {
     showToast('Falha ao consultar os dados para comparação.');
   } finally {$('compareBtn').disabled=false;$('compareBtn').textContent='Comparar dados';}
 }
-const defaultPreferences = {theme:'dark',accent:'cyan',density:'auto',motion:true};
+const defaultPreferences = {theme:'dark',accent:'cyan',density:'auto',motion:true,homeLayout:'balanced'};
 function readPreferences() {
   try {
     const stored=JSON.parse(localStorage.getItem('radar-preferences') || '{}');
@@ -328,11 +332,43 @@ function applyPreferences() {
   root.dataset.density=state.preferences.density;
   root.dataset.motion=state.preferences.motion?'on':'off';
   applyTheme(state.preferences.theme);
+  root.dataset.homeLayout=state.preferences.homeLayout || 'balanced';
+  $('homeLayoutSelect').value=state.preferences.homeLayout || 'balanced';
   $('themeSelect').value=state.preferences.theme;
   $('accentSelect').value=state.preferences.accent;
   $('densitySelect').value=state.preferences.density;
   $('motionToggle').checked=state.preferences.motion;
 }
+
+function initGroupedWorkspace(){
+ const main=document.querySelector('main.shell');
+ const hero=main.querySelector('.hero'),heading=main.querySelector('.section-heading'),stats=main.querySelector('.stats-grid');
+ const content=main.querySelector('.content-grid'),votes=main.querySelector('.votes-panel'),compare=main.querySelector('.comparison-section'),method=main.querySelector('.methodology');
+ const views=document.createElement('div');views.id='workspaceViews';views.className='workspace-views';
+ const home=document.createElement('section');home.className='workspace-view active';home.dataset.view='home';
+ const activity=document.createElement('section');activity.className='workspace-view';activity.dataset.view='activity';
+ const analysis=document.createElement('section');analysis.className='workspace-view';analysis.dataset.view='analysis';
+ [hero,heading,stats,method].forEach(node=>node&&home.appendChild(node));
+ [content,votes].forEach(node=>node&&activity.appendChild(node));
+ if(compare)analysis.appendChild(compare);
+ views.append(home,activity,analysis);
+ const profile=main.querySelector('#profileView');
+ profile.insertAdjacentElement('afterend',views);
+ const subnav=document.createElement('div');subnav.id='workspaceSubnav';subnav.className='workspace-subnav';subnav.setAttribute('aria-label','Seções da área');
+ const links={home:[['Visão geral','#visao-geral']],activity:[['Parlamentares','#parlamentares'],['Proposições','#proposicoes'],['Votações','#votacoes']],analysis:[['Comparar parlamentares','#comparar']]};
+ const setView=(name,anchor)=>{
+  if(!profile.hidden){setDashboardVisible(true);}
+  views.querySelectorAll('.workspace-view').forEach(v=>v.classList.toggle('active',v.dataset.view===name));
+  document.querySelectorAll('.workspace-tab').forEach(b=>{const active=b.dataset.workspace===name;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+  subnav.innerHTML=links[name].map((item,index)=>'<button type="button" class="workspace-subtab '+((anchor===item[1]||(!anchor&&index===0))?'active':'')+'" data-anchor="'+item[1]+'">'+item[0]+'</button>').join('');
+  subnav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{subnav.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));document.querySelector(b.dataset.anchor)?.scrollIntoView({behavior:'smooth',block:'start'});}));
+  if(anchor)document.querySelector(anchor)?.scrollIntoView({behavior:'smooth',block:'start'});else window.scrollTo({top:0,behavior:'smooth'});
+ };
+ document.querySelector('.topbar').insertAdjacentElement('afterend',subnav);
+ document.querySelectorAll('.workspace-tab').forEach(button=>button.addEventListener('click',()=>setView(button.dataset.workspace)));
+ setView('home');
+}
+
 function initTheme() {
   applyPreferences();
   $('themeToggle').addEventListener('click',()=>{
@@ -341,6 +377,7 @@ function initTheme() {
     $('themeSelect').value=state.preferences.theme;
     savePreferences();applyTheme(state.preferences.theme);
   });
+  $('homeLayoutSelect').addEventListener('change',event=>{state.preferences.homeLayout=event.target.value;savePreferences();applyPreferences();});
   $('themeSelect').addEventListener('change',event=>{state.preferences.theme=event.target.value;savePreferences();applyTheme(state.preferences.theme);});
   $('accentSelect').addEventListener('change',event=>{state.preferences.accent=event.target.value;savePreferences();applyPreferences();});
   $('densitySelect').addEventListener('change',event=>{state.preferences.density=event.target.value;savePreferences();applyPreferences();});
@@ -365,6 +402,7 @@ function initNavigationDrawer() {
 $('compareMetric').addEventListener('change',()=>{$('compareYearLabel').textContent=$('compareMetric').value==='expenses'?'Ano da despesa':'Ano de apresentação';});
 $('compareBtn').addEventListener('click',runComparison);
 
+initGroupedWorkspace();
 initTheme();
 initNavigationDrawer();
 initComparisonPickers();
@@ -372,12 +410,15 @@ populateYears();
 loadDashboard().then(async()=>{
   populateComparisonFilters();
   try {
-    const result=await fetchAllPages('deputados?ordem=ASC&ordenarPor=nome',12,100);
+    const result=await fetchAllPages('deputados?ordem=ASC&ordenarPor=nome',100,100);
     state.allDeputies=result.rows;
     populateComparisonFilters();
-    if(!result.complete) showToast('Lista de parlamentares carregada parcialmente.');
+    $('deputyFoot').textContent=result.rows.length+' deputados carregados'+(result.complete?' · consulta concluída':' · consulta parcial');
+    setMetric('deputyCount',result.rows.length);
+    if(!result.complete) showToast('Catálogo parcial: '+result.rows.length+' registros após '+result.pages+' páginas.');
   } catch(error) {
     populateComparisonFilters();
-    showToast('Comparador usando a lista inicial de parlamentares; lista completa indisponível.');
+    $('deputyFoot').textContent='Catálogo completo indisponível; '+state.deputies.length+' registros iniciais disponíveis.';
+    showToast('Catálogo completo indisponível; comparador usando a lista inicial.');
   }
 });
