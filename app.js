@@ -162,43 +162,45 @@ $('timelineFilter').addEventListener('change', renderTimeline);
 function money(value) {
   return Number(value || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
-function fillComparisonDeputies() {
-  const options = state.deputies.map(d => '<option value="' + Number(d.id) + '">' + escapeHtml(d.nome) + ' — ' + escapeHtml(d.siglaUf || '') + '/' + escapeHtml(d.siglaPartido || '') + '</option>').join('');
-  ['compareDeputyA','compareDeputyB'].forEach(id => { $(id).innerHTML = '<option value="">Selecione um deputado</option>' + options; });
-  const preferredA=deputies.find(d=>/nikolas ferreira/i.test(d.nome||''));
-  const preferredB=deputies.find(d=>/kim kataguiri/i.test(d.nome||''));
-  if (preferredA && preferredB) { $('compareDeputyA').value=String(preferredA.id); $('compareDeputyB').value=String(preferredB.id); }
-  else if (deputies.length>1) { $('compareDeputyA').value=String(deputies[0].id); $('compareDeputyB').value=String(deputies[1].id); }
+function fillComparisonDeputies(deputies=state.allDeputies.length?state.allDeputies:state.deputies) {
+  const options=deputies.map(d=>'<option value="'+Number(d.id)+'">'+escapeHtml(d.nome)+' — '+escapeHtml(d.siglaUf||'')+'/'+escapeHtml(d.siglaPartido||'')+'</option>').join('');
+  ['compareDeputyA','compareDeputyB'].forEach(id=>{$(id).innerHTML='<option value="">Selecione um deputado</option>'+options;});
+  const first=deputies.find(d=>/nikolas ferreira/i.test(d.nome||''));
+  const second=deputies.find(d=>/kim kataguiri/i.test(d.nome||''));
+  if(first&&second){$('compareDeputyA').value=String(first.id);$('compareDeputyB').value=String(second.id);}
+  else if(deputies.length>1){$('compareDeputyA').value=String(deputies[0].id);$('compareDeputyB').value=String(deputies[1].id);}
 }
 function populateYears() {
   const year = new Date().getFullYear();
   $('compareYear').innerHTML = Array.from({length:7},(_,i)=>year-i).map(y=>'<option value="'+y+'">'+y+'</option>').join('');
 }
-async function fetchAllPages(path, maxPages=10) {
+async function fetchAllPages(path,maxPages=20,pageSize=100) {
   const all=[];
   for(let page=1;page<=maxPages;page++){
     const separator=path.includes('?')?'&':'?';
-    const result=await api(path+separator+'pagina='+page+'&itens=100');
+    const result=await api(path+separator+'pagina='+page+'&itens='+pageSize);
     const rows=result.dados||[];
     all.push(...rows);
-    if(rows.length<100) break;
+    if(rows.length<pageSize)return {rows:all,complete:true};
   }
-  return all;
+  return {rows:all,complete:false};
 }
 async function getExpenseTotal(id,year) {
-  const rows=await fetchAllPages('deputados/'+id+'/despesas?ano='+year+'&ordem=ASC&ordenarPor=ano');
-  const total=rows.reduce((sum,row)=>sum+Number(row.valorLiquido ?? row.valorDocumento ?? 0),0);
-  return {total,records:rows.length,rows};
+  const result=await fetchAllPages('deputados/'+id+'/despesas?ano='+year+'&ordem=ASC&ordenarPor=ano',20,50);
+  const rows=result.rows;
+  const total=rows.reduce((sum,row)=>sum+Number(row.valorLiquido??row.valorDocumento??0),0);
+  return {total,records:rows.length,rows,complete:result.complete};
 }
-async function getProposalStats(id) {
-  const rows=await fetchAllPages('proposicoes?idDeputadoAutor='+id+'&ordem=DESC&ordenarPor=ano',5);
+async function getProposalStats(id,year) {
+  const result=await fetchAllPages('proposicoes?idDeputadoAutor='+id+'&ano='+year+'&ordem=DESC&ordenarPor=ano',20,100);
+  const rows=result.rows;
   const checked=rows.slice(0,40);
   const statuses=[];
   for(let i=0;i<checked.length;i+=8){
     const batch=await Promise.allSettled(checked.slice(i,i+8).map(p=>api('proposicoes/'+p.id)));
-    batch.forEach((result,index)=>{
-      if(result.status==='fulfilled'){
-        const item=result.value.dados||{};
+    batch.forEach((entry,index)=>{
+      if(entry.status==='fulfilled'){
+        const item=entry.value.dados||{};
         const status=item.statusProposicao||{};
         statuses.push({proposal:checked[i+index],status:status.descricaoSituacao||'Situação não informada'});
       }
@@ -249,20 +251,25 @@ async function runComparison() {
     showToast('Falha ao consultar os dados para comparação.');
   } finally {$('compareBtn').disabled=false;$('compareBtn').textContent='Comparar dados';}
 }
-function initTheme() {
-  const saved=localStorage.getItem('radar-theme');
-  const dark=saved?saved==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+function applyTheme(dark) {
+  document.documentElement.dataset.theme=dark?'dark':'light';
   document.body.classList.toggle('dark-theme',dark);
+  document.documentElement.style.colorScheme=dark?'dark':'light';
   updateThemeButton();
+}
+function initTheme() {
+  let saved=null;
+  try{saved=localStorage.getItem('radar-theme');}catch(error){}
+  const prefersDark=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)').matches:false;
+  applyTheme(saved==='dark'||(saved===null&&prefersDark));
   $('themeToggle').addEventListener('click',()=>{
-    const next=!document.body.classList.contains('dark-theme');
-    document.body.classList.toggle('dark-theme',next);
-    localStorage.setItem('radar-theme',next?'dark':'light');
-    updateThemeButton();
+    const next=document.documentElement.dataset.theme!=='dark';
+    applyTheme(next);
+    try{localStorage.setItem('radar-theme',next?'dark':'light');}catch(error){}
   });
 }
 function updateThemeButton() {
-  const dark=document.body.classList.contains('dark-theme');
+  const dark=document.documentElement.dataset.theme==='dark';
   $('themeToggle').innerHTML='<span class="theme-icon">'+(dark?'☀':'☾')+'</span><span class="theme-text">'+(dark?'Tema claro':'Tema escuro')+'</span>';
   $('themeToggle').setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo noturno');
 }
