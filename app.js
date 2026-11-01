@@ -1,6 +1,6 @@
 const API = 'https://dadosabertos.camara.leg.br/api/v2';
 const $ = (id) => document.getElementById(id);
-const state = { deputies: [], allDeputies: [], proposals: [], votes: [], timeline: [], comparisonScope: 'national', comparisonState: '', preferences: {} };
+const state = { deputies: [], allDeputies: [], proposals: [], votes: [], timeline: [], comparisonScope: 'national', comparisonState: '', preferences: {}, selectedCandidates: {}, candidateResults: {A:[],B:[]}, candidateRequest: {A:0,B:0} };
 const fmtDate = (value) => {
   if (!value) return 'Data não informada';
   const d = new Date(value);
@@ -151,20 +151,19 @@ async function loadDashboard() {
   else showToast('Dados atualizados diretamente da Câmara.');
 }
 $('refreshBtn').addEventListener('click', loadDashboard);
-$('searchForm').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const term = $('deputySearch').value.trim();
-  if (!term) { renderDeputies(state.deputies); return; }
-  $('deputyList').innerHTML = '<div class="empty-state">Buscando na API oficial…</div>';
-  try {
-    const result = await api('deputados?nome=' + encodeURIComponent(term) + '&ordem=ASC&ordenarPor=nome&itens=20');
-    renderDeputies(result.dados || []);
-    $('deputyFoot').textContent = (result.dados || []).length + ' resultado(s) para “' + term + '”';
-  } catch (error) {
-    const filtered = state.deputies.filter(d => (d.nome || '').toLowerCase().includes(term.toLowerCase()));
-    renderDeputies(filtered); showToast('Busca remota indisponível; exibindo apenas a amostra carregada.');
-  }
-});
+let mainSearchTimer;
+async function searchMainDeputies(){
+ const term=$('deputySearch').value.trim();
+ if(term.length<2){renderDeputies(state.deputies);$('deputyFoot').textContent=state.deputies.length+' registros na amostra inicial';return;}
+ $('deputyList').innerHTML='<div class="empty-state">Buscando na base oficial…</div>';
+ try{
+  const result=await api('deputados?nome='+encodeURIComponent(term)+'&ordem=ASC&ordenarPor=nome&itens=100');
+  const rows=result.dados||[];renderDeputies(rows);
+  $('deputyFoot').textContent=rows.length+' resultado(s) retornados pela API para “'+term+'”'+(rows.length===100?' · refine a busca para localizar outros homônimos':'');
+ }catch(error){$('deputyList').innerHTML='<div class="empty-state error-state">Busca indisponível. Verifique a conexão e tente novamente.</div>';showToast('A API da Câmara não respondeu à busca.');}
+}
+$('deputySearch').addEventListener('input',()=>{clearTimeout(mainSearchTimer);mainSearchTimer=setTimeout(searchMainDeputies,350);});
+$('searchForm').addEventListener('submit',event=>{event.preventDefault();clearTimeout(mainSearchTimer);searchMainDeputies();});
 $('deputyList').addEventListener('click', event => {
   const button = event.target.closest('[data-deputy-id]');
   if (button) openDeputyProfile(Number(button.dataset.deputyId));
@@ -177,13 +176,44 @@ function money(value) {
 }
 const brazilStates=[['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']];
 function comparisonDirectory(){const all=state.allDeputies.length?state.allDeputies:state.deputies;if(state.comparisonScope==='state')return state.comparisonState?all.filter(d=>d.siglaUf===state.comparisonState):[];return all;}
-function setCandidate(which,deputy){if(!deputy)return;$('compareDeputy'+which).value=String(deputy.id);$('compareSearch'+which).value=deputy.nome||'';$('compareParty'+which).value=deputy.siglaPartido||'';$('compareResults'+which).innerHTML='';}
-function renderCandidateResults(which){
- const query=$('compareSearch'+which).value.trim().toLocaleLowerCase('pt-BR'),party=$('compareParty'+which).value,directory=comparisonDirectory();
- let selected=$('compareDeputy'+which).value;
- if(selected&&!directory.some(d=>String(d.id)===selected)){$('compareDeputy'+which).value='';$('compareSearch'+which).value='';selected='';}
- const rows=directory.filter(d=>(!query||(d.nome||'').toLocaleLowerCase('pt-BR').includes(query))&&(!party||d.siglaPartido===party)).slice(0,10);
- $('compareResults'+which).innerHTML=rows.length?rows.map(d=>'<button type="button" class="candidate-result" role="option" aria-selected="'+(String(d.id)===selected)+'" data-candidate-id="'+Number(d.id)+'" data-picker="'+which+'" style="--party-color:'+partyColorFor(d.siglaPartido)+'"><span class="candidate-result-party">'+escapeHtml(d.siglaPartido||'—')+'</span><span class="candidate-result-name">'+escapeHtml(d.nome||'Parlamentar')+'</span><small>'+escapeHtml(d.siglaUf||'UF não informada')+'</small></button>').join(''):'<div class="candidate-no-results">Nenhum parlamentar encontrado com esses filtros.</div>';
+function setCandidate(which,deputy){
+ if(!deputy||!deputy.id)return;
+ const select=$('compareDeputy'+which),id=String(deputy.id);
+ let option=[...select.options].find(item=>item.value===id);
+ if(!option){option=document.createElement('option');option.value=id;select.appendChild(option);}
+ option.textContent=deputy.nome||('Parlamentar '+id);option.selected=true;
+ state.selectedCandidates[which]=deputy;
+ $('compareSearch'+which).value=deputy.nome||'';
+ $('compareParty'+which).value=deputy.siglaPartido||'';
+ $('compareResults'+which).innerHTML='';
+}
+async function renderCandidateResults(which){
+ const query=$('compareSearch'+which).value.trim(),party=$('compareParty'+which).value;
+ const token=++state.candidateRequest[which];
+ const local=(state.allDeputies.length?state.allDeputies:state.deputies);
+ const filterRows=rows=>rows.filter(d=>(!party||d.siglaPartido===party)&&
+  (state.comparisonScope!=='state'||!state.comparisonState||d.siglaUf===state.comparisonState)).slice(0,12);
+ const paint=rows=>{
+  const selected=$('compareDeputy'+which).value;
+  $('compareResults'+which).innerHTML=rows.length?rows.map(d=>'<button type="button" class="candidate-result" role="option" aria-selected="'+(String(d.id)===selected)+'" data-candidate-id="'+Number(d.id)+'" data-picker="'+which+'" style="--party-color:'+partyColorFor(d.siglaPartido)+'"><span class="candidate-result-party">'+escapeHtml(d.siglaPartido||'—')+'</span><span class="candidate-result-name">'+escapeHtml(d.nome||'Parlamentar')+'</span><small>'+escapeHtml(d.siglaUf||'UF não informada')+'</small></button>').join(''):'<div class="candidate-no-results">Nenhum parlamentar encontrado com esses filtros.</div>';
+ };
+ if(query.length<2){state.candidateResults[which]=filterRows(local);paint(state.candidateResults[which]);return;}
+ paint(filterRows(local.filter(d=>(d.nome||'').toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')))));
+ $('compareResults'+which).insertAdjacentHTML('beforeend','<div class="candidate-no-results">Consultando a base oficial…</div>');
+ try{
+  const params=new URLSearchParams({nome:query,ordem:'ASC',ordenarPor:'nome',itens:'100'});
+  if(state.comparisonScope==='state'&&state.comparisonState)params.set('siglaUf',state.comparisonState);
+  const result=await api('deputados?'+params.toString());
+  if(token!==state.candidateRequest[which])return;
+  const rows=filterRows(result.dados||[]);
+  state.candidateResults[which]=rows;
+  paint(rows);
+ }catch(error){
+  if(token!==state.candidateRequest[which])return;
+  const rows=filterRows(local.filter(d=>(d.nome||'').toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))));
+  state.candidateResults[which]=rows;paint(rows);
+  if(!rows.length)$('compareResults'+which).insertAdjacentHTML('beforeend','<small class="candidate-no-results">Busca remota indisponível; tente novamente.</small>');
+ }
 }
 function updateComparisonScope(){
  document.querySelectorAll('.scope-option').forEach(button=>{const active=button.dataset.scope===state.comparisonScope;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
@@ -202,11 +232,21 @@ function populateComparisonFilters(){
 }
 function initComparisonPickers(){
  ['A','B'].forEach(which=>{
-  $('compareSearch'+which).addEventListener('input',()=>{$('compareDeputy'+which).value='';renderCandidateResults(which);});
-  $('compareParty'+which).addEventListener('change',()=>{$('compareDeputy'+which).value='';renderCandidateResults(which);});
+  let timer;
+  $('compareSearch'+which).addEventListener('input',()=>{
+   $('compareDeputy'+which).value='';delete state.selectedCandidates[which];
+   clearTimeout(timer);timer=setTimeout(()=>renderCandidateResults(which),300);
+  });
+  $('compareParty'+which).addEventListener('change',()=>{$('compareDeputy'+which).value='';delete state.selectedCandidates[which];renderCandidateResults(which);});
   $('compareSearch'+which).addEventListener('focus',()=>renderCandidateResults(which));
-  $('compareResults'+which).addEventListener('click',event=>{const button=event.target.closest('[data-candidate-id]');if(button){const deputy=comparisonDirectory().find(d=>Number(d.id)===Number(button.dataset.candidateId));setCandidate(which,deputy);}});
-  document.querySelector('[data-clear="'+which+'"]').addEventListener('click',()=>{$('compareDeputy'+which).value='';$('compareSearch'+which).value='';renderCandidateResults(which);});
+  $('compareResults'+which).addEventListener('click',event=>{
+   const button=event.target.closest('[data-candidate-id]');
+   if(button){const pool=[...state.candidateResults[which],...state.deputies,...state.allDeputies];const deputy=pool.find(d=>String(d.id)===button.dataset.candidateId);setCandidate(which,deputy);}
+  });
+  document.querySelector('[data-clear="'+which+'"]').addEventListener('click',()=>{
+   $('compareDeputy'+which).value='';$('compareDeputy'+which).innerHTML='<option value="">Selecione um deputado</option>';
+   $('compareSearch'+which).value='';delete state.selectedCandidates[which];renderCandidateResults(which);
+  });
  });
  document.querySelectorAll('.scope-option').forEach(button=>button.addEventListener('click',()=>{state.comparisonScope=button.dataset.scope;updateComparisonScope();renderCandidateResults('A');renderCandidateResults('B');try{localStorage.setItem('radar-comparison-scope',state.comparisonScope);}catch(error){}}));
  $('compareState').addEventListener('change',()=>{state.comparisonState=$('compareState').value;try{localStorage.setItem('radar-comparison-state',state.comparisonState);}catch(error){}renderCandidateResults('A');renderCandidateResults('B');updateComparisonScope();});
@@ -271,9 +311,9 @@ function renderComparisonChart(a,b,aValue,bValue,formatter,title){
 async function runComparison() {
   const idA=Number($('compareDeputyA').value),idB=Number($('compareDeputyB').value);
   const metric=$('compareMetric').value,year=Number($('compareYear').value);
-  if(!idA||!idB||idA===idB){showToast('Selecione dois parlamentares diferentes.');return;}
+  if(!idA||!idB||String($('compareDeputyA').value)===String($('compareDeputyB').value)){showToast('Selecione dois parlamentares diferentes.');return;}
   const directory=comparisonDirectory();
-  const a=directory.find(d=>Number(d.id)===idA),b=directory.find(d=>Number(d.id)===idB);
+  const a=state.selectedCandidates.A||directory.find(d=>Number(d.id)===idA),b=state.selectedCandidates.B||directory.find(d=>Number(d.id)===idB);
   $('compareBtn').disabled=true;$('compareBtn').textContent='Consultando…';
   $('comparisonResults').innerHTML='<div class="comparison-loading">Consultando registros oficiais. Isso pode levar alguns segundos…</div>';
   try {
@@ -404,18 +444,7 @@ initTheme();
 initNavigationDrawer();
 initComparisonPickers();
 populateYears();
-loadDashboard().then(async()=>{
-  populateComparisonFilters();
-  try {
-    const result=await fetchAllPages('deputados?ordem=ASC&ordenarPor=nome',100,100);
-    state.allDeputies=result.rows;
-    populateComparisonFilters();
-    $('deputyFoot').textContent=result.rows.length+' deputados carregados'+(result.complete?' · consulta concluída':' · consulta parcial');
-    setMetric('deputyCount',result.rows.length);
-    if(!result.complete) showToast('Catálogo parcial: '+result.rows.length+' registros após '+result.pages+' páginas.');
-  } catch(error) {
-    populateComparisonFilters();
-    $('deputyFoot').textContent='Catálogo completo indisponível; '+state.deputies.length+' registros iniciais disponíveis.';
-    showToast('Catálogo completo indisponível; comparador usando a lista inicial.');
-  }
+loadDashboard().then(()=>{
+ populateComparisonFilters();
+ $('deputyFoot').textContent=state.deputies.length+' registros na amostra inicial · pesquise para consultar toda a base disponível';
 });
