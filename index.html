@@ -69,6 +69,40 @@
         <div class="profile-identity"><div class="eyebrow">ATUAÇÃO PÚBLICA</div><h2 id="profileName">Carregando perfil…</h2><p id="profileMeta">Consultando dados oficiais</p><a id="profileSource" href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Perfil na Câmara ↗</a></div>
         <div class="profile-summary"><span>REGISTROS NA LINHA DO TEMPO</span><strong id="timelineCount">—</strong><small>Itens retornados pelas consultas disponíveis</small></div>
       </div>
+      <section class="profile-metrics" aria-labelledby="profileRadarTitle">
+        <div class="profile-metric-heading"><div><div class="eyebrow">PAINEL DE INDICADORES</div><h2 id="profileRadarTitle">Radar descritivo</h2></div><span class="metric-source-label" id="radarStatus">DADOS EM CONSULTA</span></div>
+        <div class="radar-factual">
+          <svg viewBox="0 0 360 250" role="img" aria-label="Radar com quatro dimensões de acompanhamento; dimensões sem dados comparáveis permanecem sem preenchimento">
+            <g class="radar-grid" fill="none" stroke="currentColor" stroke-width="1">
+              <polygon points="180,35 285,105 245,210 115,210 75,105" transform="translate(0 0)" opacity=".25"/>
+              <polygon points="180,65 255,115 226,190 134,190 105,115" opacity=".2"/>
+              <polygon points="180,95 225,125 207,170 153,170 135,125" opacity=".2"/>
+              <path d="M180 125V35 M180 125L285 105 M180 125L245 210 M180 125L115 210 M180 125L75 105" opacity=".35"/>
+            </g>
+            <g class="radar-labels" fill="currentColor" font-size="10" text-anchor="middle">
+              <text x="180" y="19">Presença em sessões</text><text x="305" y="101">Execução da cota</text><text x="258" y="229">Proposições</text><text x="101" y="229">Emendas</text><text x="53" y="101">Média da Câmara</text>
+            </g>
+            <text x="180" y="130" class="radar-center" text-anchor="middle" fill="currentColor" font-size="10">Sem série</text>
+            <text x="180" y="145" class="radar-center" text-anchor="middle" fill="currentColor" font-size="9">comparável</text>
+          </svg>
+          <div class="radar-factual-note"><strong>Visualização não calculada.</strong> A API consultada não fornece, neste fluxo, presenças elegíveis, teto individual da cota, emendas por parlamentar nem uma série consolidada da média da Câmara. O gráfico só será preenchido quando houver dados comparáveis, período e metodologia verificáveis.</div>
+        </div>
+      </section>
+      <section class="profile-metrics" aria-labelledby="profileContactTitle">
+        <div class="profile-metric-heading"><div><div class="eyebrow">CANAIS INSTITUCIONAIS</div><h2 id="profileContactTitle">Contato do gabinete</h2></div><span class="metric-source-label">CADASTRO OFICIAL</span></div>
+        <div id="profileContact" class="profile-contact"><div class="amendment-empty">Consultando dados oficiais do gabinete…</div></div>
+      </section>
+      <section class="profile-amendments" aria-labelledby="profileExpensesTitle">
+        <div class="profile-metric-heading"><div><div class="eyebrow">TRANSPARÊNCIA DE DESPESAS</div><h2 id="profileExpensesTitle">Despesas da cota parlamentar</h2></div><a href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank" rel="noopener">Documentação da API ↗</a></div>
+        <div id="profileExpenses"><div class="amendment-empty">Consultando despesas registradas…</div></div>
+        <div class="timeline-footnote">Registros da Cota para o Exercício da Atividade Parlamentar (CEAP). Despesas da cota não são emendas parlamentares. Valores e documentos dependem da atualização da base oficial.</div>
+      </section>
+      <section class="profile-amendments" aria-labelledby="profileAmendmentsTitle">
+        <div class="profile-metric-heading"><div><div class="eyebrow">ORÇAMENTO PÚBLICO</div><h2 id="profileAmendmentsTitle">Emendas parlamentares e municípios</h2></div><span class="metric-source-label">INTEGRAÇÃO PENDENTE</span></div>
+        <div class="amendment-empty">A API REST v2 consultada não documenta um endpoint de emendas individualizadas com município beneficiado e execução. Para evitar associação incorreta de autoria ou destino, esta tabela não apresenta registros estimados. Consulte as bases oficiais:
+          <ul><li><a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Portal da Transparência — Emendas parlamentares ↗</a></li><li><a href="https://especial.camara.leg.br/orcamento-aberto/" target="_blank" rel="noopener">Câmara — Orçamento Aberto ↗</a></li></ul>
+        </div>
+      </section>
       <div class="timeline-toolbar"><div><div class="eyebrow">ACOMPANHAMENTO CRONOLÓGICO</div><h2>Linha do tempo</h2><p>Atividades e registros públicos organizados por data, com acesso às fontes oficiais.</p></div><label class="timeline-filter">Tipo de registro<select id="timelineFilter"><option value="todos">Todos os registros</option><option value="evento">Eventos</option><option value="discurso">Discursos</option><option value="despesa">Despesas</option></select></label></div>
       <div id="timelineList" class="timeline-list"><div class="empty-state">Carregando atividade parlamentar…</div></div>
       <div class="timeline-footnote">A linha do tempo reúne registros retornados pela API de Dados Abertos da Câmara. A ausência de um item não significa necessariamente que a atividade não ocorreu; depende dos dados e endpoints disponíveis.</div>
