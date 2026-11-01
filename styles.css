@@ -262,3 +262,6 @@ html[data-theme="light"] .appearance-popover{background:#fff;border-color:var(--
 @media(max-width:850px){.topbar{padding:0 18px}.topnav{gap:12px}.topnav a{font-size:10px}.brand{min-width:170px}}
 @media(max-width:720px){.topnav{display:none}.topbar{height:66px;padding:0 14px}.side-drawer{top:66px}.drawer-backdrop{inset:66px 0 0}.hero{padding:42px 22px;min-height:300px}.hero-visual{margin-right:-90px;opacity:.48}.top-actions{gap:5px}.live-label{display:none}.appearance-settings summary{font-size:0;padding:9px}.appearance-settings summary:after{content:"⚙";font-size:15px}.theme-toggle{padding:8px}.theme-text{display:none}.shell{padding-left:16px;padding-right:16px}.hero{margin-left:-16px;margin-right:-16px}.comparison-section{padding:18px 14px}}
 @media(max-width:420px){.brand{min-width:0}.brand strong{font-size:11px}.brand small{font-size:7px}.refresh-btn{display:none}.appearance-popover{right:-46px;width:220px}.hero h1{font-size:37px}.hero-visual{right:-155px}}
+
+.party-color-note{margin:0;padding:0 0 14px;color:#8e9ba6;font-size:9px;line-height:1.5}
+html[data-theme="light"] .party-color-note{color:#74818d}
