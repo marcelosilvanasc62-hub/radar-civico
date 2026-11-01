@@ -91,6 +91,36 @@ function setDashboardVisible(visible) {
   if ($('workspaceViews')) $('workspaceViews').hidden = !visible;
   if (visible) window.scrollTo({top:0,behavior:'smooth'});
 }
+function renderProfileContact(detail, fallbackDeputy) {
+  const status=detail?.ultimoStatus||{};
+  const cabinet=status.gabinete||detail?.gabinete||{};
+  const email=cabinet.email||status.email||detail?.email||'';
+  const phone=cabinet.telefone||status.telefone||'';
+  const fields=[
+    ['Gabinete',cabinet.nome],['Prédio',cabinet.predio],['Anexo',cabinet.anexo],['Andar',cabinet.andar],['Sala',cabinet.sala],['Telefone',phone]
+  ].filter(([,value])=>value!==undefined&&value!==null&&String(value).trim()!=='');
+  const socialRaw=detail?.redesSociais||detail?.redeSocial||status.redesSociais||status.redeSocial||[];
+  const socials=(Array.isArray(socialRaw)?socialRaw:[socialRaw]).map(item=>typeof item==='string'?item:(item?.url||item?.uri||item?.redeSocial||'')).filter(Boolean).map(url=>safeUrl(url,'')).filter(Boolean);
+  const contact=$('profileContact');
+  contact.innerHTML='<div class="contact-grid">'+fields.map(([label,value])=>'<div class="contact-field"><small>'+escapeHtml(label)+'</small><strong>'+escapeHtml(value)+'</strong></div>').join('')+'</div>'+
+    (email?'<div class="contact-actions"><a class="contact-link" href="mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent('Solicitação de Esclarecimento Cidadão - Radar Cívico')+'">Enviar e-mail ao gabinete</a><button type="button" class="contact-copy" data-copy-email="'+escapeHtml(email)+'">Copiar e-mail</button></div>':'<p class="amendment-empty">E-mail oficial não informado no cadastro retornado pela API.</p>')+
+    (socials.length?'<div class="contact-socials">'+socials.map((url,index)=>'<a href="'+url+'" target="_blank" rel="noopener">Rede social '+(index+1)+' ↗</a>').join('')+'</div>':'<p class="contact-muted">Nenhuma rede social foi retornada no campo consultado da API.</p>')+
+    '<p class="contact-muted">Dados exibidos conforme cadastro oficial consultado. Em caso de divergência, confirme no <a href="https://www.camara.leg.br/deputados/" target="_blank" rel="noopener">portal da Câmara</a>.</p>';
+  contact.querySelector('[data-copy-email]')?.addEventListener('click',async event=>{
+    const value=event.currentTarget.dataset.copyEmail;
+    try{await navigator.clipboard.writeText(value);showToast('E-mail copiado.');}
+    catch(error){showToast('Não foi possível copiar automaticamente: '+value);}
+  });
+}
+function renderProfileExpenses(rows,complete) {
+  const host=$('profileExpenses');
+  if(!rows.length){host.innerHTML='<div class="amendment-empty">A API não retornou despesas para o recorte consultado.</div>';return;}
+  const total=rows.reduce((sum,row)=>sum+Number(row.valorLiquido??row.valorDocumento??0),0);
+  host.innerHTML='<div class="expense-summary"><span>VALOR LÍQUIDO SOMADO NA CONSULTA</span><strong>'+money(total)+'</strong><small>'+rows.length+' registros · '+(complete?'paginação concluída':'consulta parcial')+'</small></div>'+
+   '<div class="amendment-table-wrap"><table class="amendment-table"><thead><tr><th>Data</th><th>Tipo de despesa</th><th>Fornecedor</th><th>Valor líquido</th><th>Documento</th></tr></thead><tbody>'+
+   rows.slice(0,30).map(row=>'<tr><td>'+fmtDate(row.dataDocumento)+'</td><td>'+escapeHtml(row.tipoDespesa||'Não informado')+'</td><td>'+escapeHtml(row.nomeFornecedor||'Não informado')+'</td><td>'+money(row.valorLiquido??row.valorDocumento)+'</td><td>'+(row.urlDocumento?'<a href="'+safeUrl(row.urlDocumento)+'" target="_blank" rel="noopener">Abrir ↗</a>':'Não informado')+'</td></tr>').join('')+
+   '</tbody></table></div>'+(rows.length>30?'<p class="contact-muted">Exibidos 30 de '+rows.length+' registros retornados.</p>':'');
+}
 async function openDeputyProfile(id) {
   if (!Number.isInteger(id) || id <= 0) return;
   const deputy = state.allDeputies.find(item => Number(item.id) === id) || state.deputies.find(item => Number(item.id) === id) || { id, nome: 'Deputado ' + id };
@@ -104,19 +134,27 @@ async function openDeputyProfile(id) {
   $('timelineList').innerHTML = '<div class="empty-state">Consultando atividade parlamentar na API oficial…</div>';
   $('timelineCount').textContent = '…';
   $('timelineFilter').value = 'todos';
+  $('profileContact').innerHTML='<div class="amendment-empty">Consultando dados oficiais do gabinete…</div>';
+  $('profileExpenses').innerHTML='<div class="amendment-empty">Consultando despesas registradas…</div>';
   const results = await Promise.allSettled([
+    api('deputados/' + id),
     api('deputados/' + id + '/eventos?ordem=DESC&ordenarPor=dataHoraInicio&itens=20'),
     api('deputados/' + id + '/discursos?ordem=DESC&ordenarPor=dataHoraInicio&itens=20'),
-    api('deputados/' + id + '/despesas?ordem=DESC&ordenarPor=ano&itens=20')
+    api('deputados/' + id + '/despesas?ordem=DESC&ordenarPor=ano&itens=100')
   ]);
+  const detail=results[0].status==='fulfilled'?(results[0].value.dados||{}):{};
+  renderProfileContact(detail,deputy);
+  if(results[3].status==='fulfilled')renderProfileExpenses(results[3].value.dados||[],!(results[3].value.links||[]).some(link=>link.rel==='next'));
+  else $('profileExpenses').innerHTML='<div class="amendment-empty">Não foi possível consultar despesas. Tente novamente mais tarde.</div>';
   const entries = [], types = ['evento','discurso','despesa'];
-  results.forEach((result,index) => {
+  results.slice(1).forEach((result,index) => {
     if (result.status === 'fulfilled') (result.value.dados || []).forEach(item => entries.push(normalizeTimeline(types[index],item)));
   });
   state.timeline = entries.sort((a,b) => b.timestamp - a.timestamp);
   renderTimeline();
-  const failures = results.filter(result => result.status === 'rejected').length;
+  const failures = results.slice(1).filter(result => result.status === 'rejected').length;
   if (!entries.length) $('timelineList').innerHTML = '<div class="timeline-empty">' + (failures === 3 ? 'Não foi possível consultar os registros agora. Tente novamente mais tarde.' : 'A API não retornou registros para este perfil nas consultas realizadas.') + '</div>';
+  if(results[0].status==='rejected')$('profileContact').innerHTML='<div class="amendment-empty">Não foi possível consultar o cadastro do gabinete. Consulte o perfil oficial da Câmara.</div>';
   if (failures) showToast(failures + ' consulta(s) de atividade não responderam.');
 }
 async function loadDashboard() {
