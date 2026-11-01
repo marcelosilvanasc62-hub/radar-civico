@@ -44,3 +44,5 @@
 .deputy-open{border:0;background:transparent;text-align:left;display:flex;align-items:center;gap:11px;flex:1;min-width:0;padding:0;cursor:pointer;color:inherit;font:inherit}
 .deputy-open .person{min-width:0}
 @media(max-width:620px){.profile-view{padding:16px 14px}.profile-header{padding:16px;align-items:flex-start;flex-wrap:wrap}.profile-photo{width:65px;height:65px}.profile-summary{border-left:0;border-top:1px solid #dce3e7;padding:13px 0 0;width:100%}.profile-summary strong{font-size:25px}.timeline-toolbar{align-items:stretch;flex-direction:column}.timeline-filter{width:100%}.timeline-filter select{width:100%}.timeline-list{padding-left:21px}}
+
+[hidden]{display:none!important}
