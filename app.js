@@ -92,7 +92,7 @@ function setDashboardVisible(visible) {
 }
 async function openDeputyProfile(id) {
   if (!Number.isInteger(id) || id <= 0) return;
-  const deputy = state.deputies.find(item => Number(item.id) === id) || { id, nome: 'Deputado ' + id };
+  const deputy = state.allDeputies.find(item => Number(item.id) === id) || state.deputies.find(item => Number(item.id) === id) || { id, nome: 'Deputado ' + id };
   setDashboardVisible(false);
   $('profileName').textContent = deputy.nome || 'Perfil parlamentar';
   $('profileMeta').textContent = [deputy.siglaPartido, deputy.siglaUf].filter(Boolean).join(' · ') || 'Consultando dados oficiais';
@@ -268,7 +268,7 @@ async function runComparison() {
     showToast('Falha ao consultar os dados para comparação.');
   } finally {$('compareBtn').disabled=false;$('compareBtn').textContent='Comparar dados';}
 }
-const defaultPreferences = {theme:'dark',accent:'cyan',density:'comfortable',motion:true};
+const defaultPreferences = {theme:'dark',accent:'cyan',density:'auto',motion:true};
 function readPreferences() {
   try {
     const stored=JSON.parse(localStorage.getItem('radar-preferences') || '{}');
