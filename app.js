@@ -151,19 +151,20 @@ async function loadDashboard() {
   else showToast('Dados atualizados diretamente da Câmara.');
 }
 $('refreshBtn').addEventListener('click', loadDashboard);
-let mainSearchTimer;
-async function searchMainDeputies(){
+let mainSearchTimer,mainSearchToken=0;
+async function searchMainDeputies(token=++mainSearchToken){
  const term=$('deputySearch').value.trim();
  if(term.length<2){renderDeputies(state.deputies);$('deputyFoot').textContent=state.deputies.length+' registros na amostra inicial';return;}
  $('deputyList').innerHTML='<div class="empty-state">Buscando na base oficial…</div>';
  try{
   const result=await api('deputados?nome='+encodeURIComponent(term)+'&ordem=ASC&ordenarPor=nome&itens=100');
+  if(token!==mainSearchToken)return;
   const rows=result.dados||[];renderDeputies(rows);
   $('deputyFoot').textContent=rows.length+' resultado(s) retornados pela API para “'+term+'”'+(rows.length===100?' · refine a busca para localizar outros homônimos':'');
- }catch(error){$('deputyList').innerHTML='<div class="empty-state error-state">Busca indisponível. Verifique a conexão e tente novamente.</div>';showToast('A API da Câmara não respondeu à busca.');}
+ }catch(error){if(token!==mainSearchToken)return;$('deputyList').innerHTML='<div class="empty-state error-state">Busca indisponível. Verifique a conexão e tente novamente.</div>';showToast('A API da Câmara não respondeu à busca.');}
 }
-$('deputySearch').addEventListener('input',()=>{clearTimeout(mainSearchTimer);mainSearchTimer=setTimeout(searchMainDeputies,350);});
-$('searchForm').addEventListener('submit',event=>{event.preventDefault();clearTimeout(mainSearchTimer);searchMainDeputies();});
+$('deputySearch').addEventListener('input',()=>{const token=++mainSearchToken;clearTimeout(mainSearchTimer);mainSearchTimer=setTimeout(()=>searchMainDeputies(token),350);});
+$('searchForm').addEventListener('submit',event=>{event.preventDefault();clearTimeout(mainSearchTimer);searchMainDeputies(++mainSearchToken);});
 $('deputyList').addEventListener('click', event => {
   const button = event.target.closest('[data-deputy-id]');
   if (button) openDeputyProfile(Number(button.dataset.deputyId));
@@ -234,6 +235,7 @@ function initComparisonPickers(){
  ['A','B'].forEach(which=>{
   let timer;
   $('compareSearch'+which).addEventListener('input',()=>{
+   state.candidateRequest[which]++;
    $('compareDeputy'+which).value='';delete state.selectedCandidates[which];
    clearTimeout(timer);timer=setTimeout(()=>renderCandidateResults(which),300);
   });
