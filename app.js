@@ -52,6 +52,7 @@ document.querySelectorAll('[data-news-filter]').forEach(b=>b.addEventListener('c
 
 $('#agendaList').addEventListener('click',e=>{const b=e.target.closest('[data-alert-id]');if(!b)return;const id=b.dataset.alertId;if(alertsCache.has(id)){enableEventAlert(alertsCache.get(id),b)}});
 const alertsCache=new Map();
+$('#openAmendments').addEventListener('click',()=>{const name=$('#openAmendments').dataset.parliamentarian||'',municipality=$('#amendmentMunicipality').value.trim();const panel=$('#amendmentLinks');panel.textContent='Na consulta oficial, informe o parlamentar '+(name||'desejado')+(municipality?' e filtre o município '+municipality:'')+'. Confira separadamente os documentos de empenho, liquidação e pagamento.';window.open('https://portaldatransparencia.gov.br/emendas/consulta','_blank','noopener')});
 $('#updatedAt').textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date());
 loadStates().finally(()=>search());
 $('#agendaDays').addEventListener('change',loadAgenda);$('#refreshAgenda').addEventListener('click',loadAgenda);
