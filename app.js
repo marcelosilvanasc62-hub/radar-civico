@@ -480,7 +480,6 @@ function initNavigationDrawer() {
 initGroupedWorkspace();
 initTheme();
 initNavigationDrawer();
-populateYears();
 loadDashboard().then(()=>{
  $('deputyFoot').textContent=state.deputies.length+' registros na amostra inicial · pesquise para consultar toda a base disponível';
 });
