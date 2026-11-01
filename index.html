@@ -7,8 +7,8 @@
   <meta name="description" content="Radar Cívico — acompanhe dados públicos da atividade parlamentar brasileira.">
   <title>Radar Cívico | Transparência em movimento</title>
   <link rel="preconnect" href="https://dadosabertos.camara.leg.br">
-  <link rel="stylesheet" href="styles.css?v=8">
-  <script src="app.js?v=8" defer></script>
+  <link rel="stylesheet" href="styles.css?v=9">
+  <script src="app.js?v=9" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -16,18 +16,12 @@
       <span class="brand-mark" aria-hidden="true">◉</span>
       <span><strong>RADAR CÍVICO</strong><small>INTELIGÊNCIA PÚBLICA</small></span>
     </a>
-    <nav class="topnav" aria-label="Navegação principal">
-      <a class="active" href="#visao-geral">Visão geral</a>
-      <a href="#parlamentares">Parlamentares</a>
-      <a href="#proposicoes">Proposições</a>
-      <a href="#votacoes">Votações</a>
-      <a href="#comparar">Comparar</a>
-    </nav>
+    <nav id="topnav" class="topnav workspace-nav" aria-label="Áreas principais"><button type="button" class="workspace-tab active" data-workspace="home" aria-pressed="true">Painel</button><button type="button" class="workspace-tab" data-workspace="activity" aria-pressed="false">Atuação</button><button type="button" class="workspace-tab" data-workspace="analysis" aria-pressed="false">Análise</button></nav>
     <div class="top-actions">
       <span class="live-dot"></span><span class="live-label">DADOS PÚBLICOS</span>
       <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" title="Abrir navegação">☰</button>
       <button id="themeToggle" class="theme-toggle" type="button" aria-label="Ativar modo noturno" title="Alternar tema"><span class="theme-icon">☾</span><span class="theme-text">Tema escuro</span></button>
-      <details class="appearance-settings"><summary aria-label="Personalizar aparência">Personalizar</summary><div class="appearance-popover"><label>Tema<select id="themeSelect"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Automático</option></select></label><label>Cor de destaque<select id="accentSelect"><option value="cyan">Ciano</option><option value="lime">Verde-limão</option><option value="violet">Violeta</option><option value="orange">Laranja</option><option value="blue">Azul</option><option value="pink">Rosa</option></select></label><label>Densidade<select id="densitySelect"><option value="comfortable">Confortável</option><option value="compact">Compacta</option><option value="auto">Automática</option></select></label><label class="motion-option"><input id="motionToggle" type="checkbox" checked> Animações ativadas</label></div></details>
+      <details class="appearance-settings"><summary aria-label="Personalizar aparência">Personalizar</summary><div class="appearance-popover"><label>Organização da home<select id="homeLayoutSelect"><option value="balanced">Equilibrada</option><option value="compact">Compacta</option><option value="focus">Foco nos indicadores</option></select></label><label>Tema<select id="themeSelect"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Automático</option></select></label><label>Cor de destaque<select id="accentSelect"><option value="cyan">Ciano</option><option value="lime">Verde-limão</option><option value="violet">Violeta</option><option value="orange">Laranja</option><option value="blue">Azul</option><option value="pink">Rosa</option></select></label><label>Densidade<select id="densitySelect"><option value="comfortable">Confortável</option><option value="compact">Compacta</option><option value="auto">Automática</option></select></label><label class="motion-option"><input id="motionToggle" type="checkbox" checked> Animações ativadas</label></div></details>
       <button id="refreshBtn" class="refresh-btn" type="button" title="Atualizar dados">↻ <span>Atualizar</span></button>
     </div>
   </header>
@@ -75,16 +69,6 @@
         <div class="profile-identity"><div class="eyebrow">ATUAÇÃO PÚBLICA</div><h2 id="profileName">Carregando perfil…</h2><p id="profileMeta">Consultando dados oficiais</p><a id="profileSource" href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Perfil na Câmara ↗</a></div>
         <div class="profile-summary"><span>REGISTROS NA LINHA DO TEMPO</span><strong id="timelineCount">—</strong><small>Itens retornados pelas consultas disponíveis</small></div>
       </div>
-      <section class="profile-metrics" aria-label="Indicadores parlamentares">
-        <div class="profile-metric-heading"><div><div class="eyebrow">INDICADORES DE FISCALIZAÇÃO</div><h2>Presença e destinação de recursos</h2></div><span class="metric-source-label">DADOS OFICIAIS · COM RESSALVAS</span></div>
-        <div class="profile-metric-grid">
-          <article class="profile-metric-card"><span>ASSIDUIDADE EM SESSÕES</span><strong id="profileAttendance">Não calculada</strong><small id="profileAttendanceNote">A frequência exige consulta ao serviço oficial de sessões e validação da matrícula parlamentar.</small><a href="https://www2.camara.leg.br/transparencia/dados-abertos/dados-abertos-legislativo/webservices/sessoesreunioes-2/listarpresencasparlamentar" target="_blank" rel="noopener">Fonte metodológica ↗</a></article>
-          <article class="profile-metric-card"><span>EMENDAS PIX</span><strong id="profilePixTotal">Consulta externa</strong><small id="profilePixNote">Valores e pagamentos dependem dos registros de execução orçamentária e da identificação do autor.</small><a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Consultar emendas ↗</a></article>
-          <article class="profile-metric-card"><span>EMENDAS PARLAMENTARES</span><strong id="profileAmendmentTotal">Consulta externa</strong><small id="profileAmendmentNote">A consolidação por parlamentar requer integração segura com a base de emendas.</small><a href="https://especial.camara.leg.br/orcamento-aberto/" target="_blank" rel="noopener">Orçamento Aberto ↗</a></article>
-        </div>
-        <div class="data-integrity-alert"><strong>Nota de transparência:</strong> estes indicadores não recebem valores estimados. A API REST usada pelo painel não fornece diretamente um percentual completo de presença plenária nem a execução individual das emendas. Os dados serão exibidos quando houver integração verificável com as fontes específicas.</div>
-      </section>
-      <section class="profile-amendments"><div class="profile-metric-heading"><div><div class="eyebrow">DESTINAÇÃO E EXECUÇÃO</div><h2>Emendas parlamentares</h2></div><a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Portal da Transparência ↗</a></div><div class="amendment-table-wrap"><table class="amendment-table"><thead><tr><th>Cidade de destino</th><th>Órgão / entidade beneficiada</th><th>Valor</th><th>Status de execução</th></tr></thead><tbody id="profileAmendmentsList"><tr><td colspan="4">Aguardando integração autenticada com a base de execução das emendas. Nenhuma destinação será inferida sem registro de origem.</td></tr></tbody></table></div></section>
       <div class="timeline-toolbar"><div><div class="eyebrow">ACOMPANHAMENTO CRONOLÓGICO</div><h2>Linha do tempo</h2><p>Atividades e registros públicos organizados por data, com acesso às fontes oficiais.</p></div><label class="timeline-filter">Tipo de registro<select id="timelineFilter"><option value="todos">Todos os registros</option><option value="evento">Eventos</option><option value="discurso">Discursos</option><option value="despesa">Despesas</option></select></label></div>
       <div id="timelineList" class="timeline-list"><div class="empty-state">Carregando atividade parlamentar…</div></div>
       <div class="timeline-footnote">A linha do tempo reúne registros retornados pela API de Dados Abertos da Câmara. A ausência de um item não significa necessariamente que a atividade não ocorreu; depende dos dados e endpoints disponíveis.</div>
@@ -111,6 +95,7 @@
       <div id="comparisonResults" class="comparison-results" aria-live="polite">
         <div class="comparison-placeholder"><span>↔</span><strong>Escolha dois parlamentares</strong><p>O resultado aparecerá aqui, com valores, diferenças e gráfico comparativo.</p></div>
       </div>
+      <section class="comparison-indicators" aria-label="Indicadores complementares da comparação"><div class="profile-metric-heading"><div><div class="eyebrow">INDICADORES COMPLEMENTARES</div><h2>Presença e destinação de recursos</h2></div><span class="metric-source-label">INTEGRAÇÃO PENDENTE</span></div><div class="profile-metric-grid"><article class="profile-metric-card"><span>ASSIDUIDADE EM SESSÕES</span><strong>Não integrado</strong><small>Exige cruzamento entre presenças oficiais e sessões elegíveis por parlamentar.</small><a href="https://www2.camara.leg.br/transparencia/dados-abertos/dados-abertos-legislativo/webservices/sessoesreunioes-2/listarpresencasparlamentar" target="_blank" rel="noopener">Fonte metodológica ↗</a></article><article class="profile-metric-card"><span>EMENDAS PIX</span><strong>Não integrado</strong><small>Valores empenhados e pagos dependem da identificação do autor na execução orçamentária.</small><a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Portal da Transparência ↗</a></article><article class="profile-metric-card"><span>EMENDAS PARLAMENTARES</span><strong>Não integrado</strong><small>A consolidação individual requer integração e validação da base de emendas.</small><a href="https://especial.camara.leg.br/orcamento-aberto/" target="_blank" rel="noopener">Orçamento Aberto ↗</a></article></div><div class="data-integrity-alert"><strong>Nota de transparência:</strong> os indicadores não exibem valores estimados. Serão preenchidos somente após integração verificável com as fontes oficiais.</div></section>
       <p class="comparison-note">Os resultados dependem da disponibilidade e atualização dos registros da Câmara. Despesas consideram valores líquidos quando informados. A situação das proposições é verificada individualmente em uma amostra; autoria compartilhada pode existir.</p>
     </section>
 
