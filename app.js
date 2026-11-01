@@ -178,7 +178,9 @@ async function fetchAllPages(path,maxPages=20,pageSize=100) {
   const all=[];
   for(let page=1;page<=maxPages;page++){
     const separator=path.includes('?')?'&':'?';
-    const result=await api(path+separator+'pagina='+page+'&itens='+pageSize);
+    let result;
+    try { result=await api(path+separator+'pagina='+page+'&itens='+pageSize); }
+    catch(error) { if(all.length)return {rows:all,complete:false}; throw error; }
     const rows=result.dados||[];
     all.push(...rows);
     if(rows.length<pageSize)return {rows:all,complete:true};
