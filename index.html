@@ -7,8 +7,8 @@
   <meta name="description" content="Radar Cívico — acompanhe dados públicos da atividade parlamentar brasileira.">
   <title>Radar Cívico | Transparência em movimento</title>
   <link rel="preconnect" href="https://dadosabertos.camara.leg.br">
-  <link rel="stylesheet" href="styles.css?v=9">
-  <script src="app.js?v=9" defer></script>
+  <link rel="stylesheet" href="styles.css?v=10">
+  <script src="app.js?v=10" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -16,7 +16,7 @@
       <span class="brand-mark" aria-hidden="true">◉</span>
       <span><strong>RADAR CÍVICO</strong><small>INTELIGÊNCIA PÚBLICA</small></span>
     </a>
-    <nav id="topnav" class="topnav workspace-nav" aria-label="Áreas principais"><button type="button" class="workspace-tab active" data-workspace="home" aria-pressed="true">Painel</button><button type="button" class="workspace-tab" data-workspace="activity" aria-pressed="false">Atuação</button><button type="button" class="workspace-tab" data-workspace="analysis" aria-pressed="false">Análise</button></nav>
+    <nav id="topnav" class="topnav workspace-nav" aria-label="Áreas principais"><button type="button" class="workspace-tab active" data-workspace="home" aria-pressed="true">Painel</button><button type="button" class="workspace-tab" data-workspace="activity" aria-pressed="false">Atuação</button><button type="button" class="workspace-tab" data-workspace="analysis" aria-pressed="false">Fontes</button></nav>
     <div class="top-actions">
       <span class="live-dot"></span><span class="live-label">DADOS PÚBLICOS</span>
       <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" title="Abrir navegação">☰</button>
@@ -109,29 +109,16 @@
     </section>
 
 
-    <section class="comparison-section" id="comparar">
-      <div class="comparison-heading">
-        <div><div class="eyebrow">ANÁLISE COMPARATIVA</div><h2>Compare a atuação parlamentar</h2><p>Selecione dois deputados para analisar despesas e produção legislativa com base nos registros oficiais.</p></div>
-        <span class="comparison-source">CÂMARA DOS DEPUTADOS · API OFICIAL</span>
-      </div>
-      <div class="comparison-scope">
-        <div class="scope-switch" role="group" aria-label="Escopo da comparação"><button type="button" class="scope-option active" data-scope="national" aria-pressed="true">Âmbito nacional</button><button type="button" class="scope-option" data-scope="state" aria-pressed="false">Meu Estado</button></div>
-        <label class="state-select-wrap">Estado de referência<select id="compareState" aria-label="Estado de referência"><option value="">Escolha seu estado</option></select></label>
-        <span class="scope-hint" id="scopeHint">Exibindo parlamentares de todos os estados.</span>
-      </div>
-      <div class="comparison-controls comparison-picker-grid">
-        <div class="candidate-picker" data-picker="A"><label for="compareSearchA">Parlamentar 1</label><div class="candidate-search"><span>⌕</span><input id="compareSearchA" type="search" autocomplete="off" placeholder="Digite o nome do parlamentar"><button type="button" class="clear-picker" data-clear="A" aria-label="Limpar seleção">×</button></div><label class="party-filter" for="comparePartyA">Filtrar por partido<select id="comparePartyA"><option value="">Todos os partidos</option></select></label><div id="compareResultsA" class="candidate-results" role="listbox" aria-label="Resultados para parlamentar 1"></div><select id="compareDeputyA" class="visually-hidden" tabindex="-1" aria-hidden="true"><option value="">Selecione um deputado</option></select></div>
-        <div class="versus">VS</div>
-        <div class="candidate-picker" data-picker="B"><label for="compareSearchB">Parlamentar 2</label><div class="candidate-search"><span>⌕</span><input id="compareSearchB" type="search" autocomplete="off" placeholder="Digite o nome do parlamentar"><button type="button" class="clear-picker" data-clear="B" aria-label="Limpar seleção">×</button></div><label class="party-filter" for="comparePartyB">Filtrar por partido<select id="comparePartyB"><option value="">Todos os partidos</option></select></label><div id="compareResultsB" class="candidate-results" role="listbox" aria-label="Resultados para parlamentar 2"></div><select id="compareDeputyB" class="visually-hidden" tabindex="-1" aria-hidden="true"><option value="">Selecione um deputado</option></select></div>
-        <label class="comparison-metric-label">Indicador<select id="compareMetric"><option value="expenses">Gastos da cota parlamentar</option><option value="proposals">Proposições apresentadas e situação</option></select></label>
-        <label id="compareYearWrap"><span id="compareYearLabel">Ano da despesa</span><select id="compareYear"></select></label><button id="compareBtn" type="button">Comparar dados</button>
-      </div>
-      <div id="comparisonResults" class="comparison-results" aria-live="polite">
-        <div class="comparison-placeholder"><span>↔</span><strong>Escolha dois parlamentares</strong><p>O resultado aparecerá aqui, com valores, diferenças e gráfico comparativo.</p></div>
-      </div>
-      <section class="comparison-indicators" aria-label="Indicadores complementares da comparação"><div class="profile-metric-heading"><div><div class="eyebrow">INDICADORES COMPLEMENTARES</div><h2>Presença e destinação de recursos</h2></div><span class="metric-source-label">INTEGRAÇÃO PENDENTE</span></div><div class="profile-metric-grid"><article class="profile-metric-card"><span>ASSIDUIDADE EM SESSÕES</span><strong>Não integrado</strong><small>Exige cruzamento entre presenças oficiais e sessões elegíveis por parlamentar.</small><a href="https://www2.camara.leg.br/transparencia/dados-abertos/dados-abertos-legislativo/webservices/sessoesreunioes-2/listarpresencasparlamentar" target="_blank" rel="noopener">Fonte metodológica ↗</a></article><article class="profile-metric-card"><span>EMENDAS PIX</span><strong>Não integrado</strong><small>Valores empenhados e pagos dependem da identificação do autor na execução orçamentária.</small><a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Portal da Transparência ↗</a></article><article class="profile-metric-card"><span>EMENDAS PARLAMENTARES</span><strong>Não integrado</strong><small>A consolidação individual requer integração e validação da base de emendas.</small><a href="https://especial.camara.leg.br/orcamento-aberto/" target="_blank" rel="noopener">Orçamento Aberto ↗</a></article></div><div class="data-integrity-alert"><strong>Nota de transparência:</strong> os indicadores não exibem valores estimados. Serão preenchidos somente após integração verificável com as fontes oficiais.</div></section>
-      <p class="comparison-note">Os resultados dependem da disponibilidade e atualização dos registros da Câmara. Despesas consideram valores líquidos quando informados. A situação das proposições é verificada individualmente em uma amostra; autoria compartilhada pode existir.</p>
-    </section>
+    <section class="methodology editorial-sources" id="fontes">
+  <div class="editorial-section-head"><div><div class="eyebrow">TRANSPARÊNCIA METODOLÓGICA</div><h2>Fontes, escopo e critérios</h2><p>O Radar Cívico organiza registros públicos por origem, período e método de coleta. Não produz notas, rankings ou conclusões sobre agentes políticos.</p></div><span class="source-stamp">BASE DOCUMENTAL · 2026</span></div>
+  <div class="source-ledger">
+    <article class="source-entry"><span class="source-index">01</span><div><h3>Câmara dos Deputados</h3><p>Cadastro parlamentar, proposições, votações e despesas da Cota para o Exercício da Atividade Parlamentar (CEAP).</p><a href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank" rel="noopener">Documentação da API ↗</a></div><span class="source-state">FONTE EM USO</span></article>
+    <article class="source-entry"><span class="source-index">02</span><div><h3>Senado Federal</h3><p>Catálogo de dados administrativos e legislativos: senadores, matérias, plenário, votações, cotas e orçamento.</p><a href="https://www12.senado.leg.br/dados-abertos" target="_blank" rel="noopener">Catálogo oficial ↗</a></div><span class="source-state">INTEGRAÇÃO FUTURA</span></article>
+    <article class="source-entry"><span class="source-index">03</span><div><h3>Portal da Transparência</h3><p>Consulta de emendas, documentos relacionados, transferências e favorecidos. A associação ao autor e ao município exige validação por identificador e exercício.</p><a href="https://api.portaldatransparencia.gov.br/" target="_blank" rel="noopener">Documentação da API ↗</a></div><span class="source-state">INTEGRAÇÃO FUTURA</span></article>
+    <article class="source-entry"><span class="source-index">04</span><div><h3>Tribunal de Contas da União</h3><p>Webservices e bases públicas para consulta de acórdãos, processos, responsáveis e dados de controle externo.</p><a href="https://sites.tcu.gov.br/dados-abertos/webservices-tcu/" target="_blank" rel="noopener">Webservices oficiais ↗</a></div><span class="source-state">INTEGRAÇÃO FUTURA</span></article>
+  </div>
+  <div class="method-note"><strong>Regra de publicação</strong><p>Cada dado deve conservar a fonte original, o identificador do registro, a data de consulta, o período de referência e a regra de transformação. Bases distintas não serão somadas sem conciliação de conceitos e chaves.</p></div>
+</section>
 
     <section class="content-grid">
       <section class="panel" id="parlamentares">
