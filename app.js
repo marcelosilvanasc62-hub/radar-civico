@@ -46,17 +46,17 @@ function renderVotes(items) {
   host.innerHTML = items.slice(0,8).map(v => '<article class="vote-item"><a href="' + safeUrl(v.uri, 'https://dadosabertos.camara.leg.br/api/v2/votacoes') + '" target="_blank" rel="noopener"><strong>' + escapeHtml(v.descricao || v.proposicaoObjeto || 'Registro de votação') + '</strong></a><small>' + fmtDate(v.dataHoraRegistro || v.dataHoraVoto || v.data) + ' · REGISTRO OFICIAL</small></article>').join('');
 }
 function normalizeTimeline(type, item) {
-  const date = item.dataApresentacao || item.dataHoraVoto || item.dataHoraRegistro || item.dataDocumento || item.data || '';
+  const date = item.dataHoraInicio || item.dataDocumento || item.data || '';
   const timestamp = date ? new Date(date).getTime() : 0;
   let title = '', detail = '', href = 'https://dadosabertos.camara.leg.br/';
-  if (type === 'proposicao') {
-    title = item.ementa || ((item.siglaTipo || 'Proposição') + ' ' + (item.numero || '') + '/' + (item.ano || '')).trim();
-    detail = [item.siglaTipo, item.numero && 'nº ' + item.numero, item.ano && '/' + item.ano].filter(Boolean).join(' ');
+  if (type === 'evento') {
+    title = item.descricao || item.descricaoTipo || 'Participação em evento';
+    detail = [item.descricaoTipo, item.localExterno].filter(Boolean).join(' · ');
     href = item.uri || href;
-  } else if (type === 'votacao') {
-    title = item.descricao || item.proposicaoObjeto || 'Votação registrada';
-    detail = [item.voto && 'Voto registrado: ' + item.voto, item.dataHoraRegistro && 'Registro de votação'].filter(Boolean).join(' · ');
-    href = item.uri || 'https://dadosabertos.camara.leg.br/api/v2/votacoes';
+  } else if (type === 'discurso') {
+    title = item.sumario || item.tipoDiscurso || 'Discurso registrado';
+    detail = item.tipoDiscurso || '';
+    href = item.urlTexto || item.uri || href;
   } else {
     title = item.tipoDespesa || 'Despesa parlamentar';
     detail = [item.nomeFornecedor, item.valorDocumento != null && Number(item.valorDocumento).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})].filter(Boolean).join(' · ');
@@ -69,7 +69,7 @@ function renderTimeline() {
   const entries = state.timeline.filter(item => filter === 'todos' || item.type === filter);
   $('timelineCount').textContent = state.timeline.length;
   if (!entries.length) { $('timelineList').innerHTML = '<div class="timeline-empty">Não há registros deste tipo nas consultas disponíveis.</div>'; return; }
-  const labels = { proposicao: 'PROPOSIÇÃO', votacao: 'VOTAÇÃO', despesa: 'DESPESA' };
+  const labels = { evento: 'EVENTO', discurso: 'DISCURSO', despesa: 'DESPESA' };
   $('timelineList').innerHTML = entries.map(item => '<article class="timeline-entry"><div class="timeline-entry-head"><span class="timeline-date">' + fmtDate(item.date) + '</span><span class="timeline-type">' + labels[item.type] + '</span></div><h3>' + escapeHtml(item.title) + '</h3>' + (item.detail ? '<p>' + escapeHtml(item.detail) + '</p>' : '') + '<a href="' + item.href + '" target="_blank" rel="noopener">Consultar registro oficial ↗</a></article>').join('');
 }
 function setDashboardVisible(visible) {
@@ -92,11 +92,11 @@ async function openDeputyProfile(id) {
   $('timelineCount').textContent = '…';
   $('timelineFilter').value = 'todos';
   const results = await Promise.allSettled([
-    api('deputados/' + id + '/proposicoes?ordem=DESC&ordenarPor=dataApresentacao&itens=20'),
-    api('deputados/' + id + '/votacoes?ordem=DESC&ordenarPor=dataHoraVoto&itens=20'),
+    api('deputados/' + id + '/eventos?ordem=DESC&ordenarPor=dataHoraInicio&itens=20'),
+    api('deputados/' + id + '/discursos?ordem=DESC&ordenarPor=dataHoraInicio&itens=20'),
     api('deputados/' + id + '/despesas?ordem=DESC&ordenarPor=ano&itens=20')
   ]);
-  const entries = [], types = ['proposicao','votacao','despesa'];
+  const entries = [], types = ['evento','discurso','despesa'];
   results.forEach((result,index) => {
     if (result.status === 'fulfilled') (result.value.dados || []).forEach(item => entries.push(normalizeTimeline(types[index],item)));
   });
