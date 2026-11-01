@@ -234,9 +234,9 @@ async function runComparison() {
     } else {
       const [ra,rb]=await Promise.all([getProposalStats(idA),getProposalStats(idB)]);
       $('comparisonResults').innerHTML='<div class="comparison-summary">'+
-        comparisonPersonCard(a,ra.presented.toLocaleString('pt-BR'),'Proposições encontradas como autoria',a.urlFoto)+
-        comparisonPersonCard(b,rb.presented.toLocaleString('pt-BR'),'Proposições encontradas como autoria',b.urlFoto)+'</div>'+
-        renderComparisonChart(a.nome,b.nome,ra.presented,rb.presented,v=>v.toLocaleString('pt-BR'),'Proposições localizadas na API')+
+        comparisonPersonCard(a,ra.presented.toLocaleString('pt-BR'),ra.limited?'Até 500 proposições localizadas':'Proposições encontradas como autoria',a.urlFoto)+
+        comparisonPersonCard(b,rb.presented.toLocaleString('pt-BR'),rb.limited?'Até 500 proposições localizadas':'Proposições encontradas como autoria',b.urlFoto)+'</div>'+
+        renderComparisonChart(a.nome,b.nome,ra.presented,rb.presented,v=>v.toLocaleString('pt-BR'),'Proposições localizadas na API (limite de 500 por parlamentar)')+
         '<div class="comparison-difference">Situação consultada individualmente em até 40 proposições por parlamentar: <strong>'+escapeHtml(a.nome)+': '+ra.approved+' aprovadas entre '+ra.checked+' verificadas</strong>; <strong>'+escapeHtml(b.nome)+': '+rb.approved+' aprovadas entre '+rb.checked+' verificadas</strong>. A contagem de aprovação é parcial e não deve ser interpretada como total histórico.</div>'+
         '<details class="comparison-detail-list"><summary>Ver situações verificadas</summary><ul>'+ra.items.slice(0,12).map(x=>'<li>'+escapeHtml(x.proposal.siglaTipo+' '+x.proposal.numero+'/'+x.proposal.ano)+' — '+escapeHtml(x.status)+'</li>').join('')+
         rb.items.slice(0,12).map(x=>'<li>'+escapeHtml(x.proposal.siglaTipo+' '+x.proposal.numero+'/'+x.proposal.ano)+' — '+escapeHtml(x.status)+'</li>').join('')+'</ul></details>';
