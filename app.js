@@ -1,6 +1,6 @@
 const API = 'https://dadosabertos.camara.leg.br/api/v2';
 const $ = (id) => document.getElementById(id);
-const state = { deputies: [], proposals: [], votes: [], timeline: [] };
+const state = { deputies: [], allDeputies: [], proposals: [], votes: [], timeline: [] };
 const fmtDate = (value) => {
   if (!value) return 'Data não informada';
   const d = new Date(value);
@@ -165,7 +165,10 @@ function money(value) {
 function fillComparisonDeputies() {
   const options = state.deputies.map(d => '<option value="' + Number(d.id) + '">' + escapeHtml(d.nome) + ' — ' + escapeHtml(d.siglaUf || '') + '/' + escapeHtml(d.siglaPartido || '') + '</option>').join('');
   ['compareDeputyA','compareDeputyB'].forEach(id => { $(id).innerHTML = '<option value="">Selecione um deputado</option>' + options; });
-  if (state.deputies.length > 1) { $('compareDeputyA').value = String(state.deputies[0].id); $('compareDeputyB').value = String(state.deputies[1].id); }
+  const preferredA=deputies.find(d=>/nikolas ferreira/i.test(d.nome||''));
+  const preferredB=deputies.find(d=>/kim kataguiri/i.test(d.nome||''));
+  if (preferredA && preferredB) { $('compareDeputyA').value=String(preferredA.id); $('compareDeputyB').value=String(preferredB.id); }
+  else if (deputies.length>1) { $('compareDeputyA').value=String(deputies[0].id); $('compareDeputyB').value=String(deputies[1].id); }
 }
 function populateYears() {
   const year = new Date().getFullYear();
@@ -202,7 +205,7 @@ async function getProposalStats(id) {
     });
   }
   const approved=statuses.filter(x=>/aprovad/i.test(x.status));
-  return {presented:rows.length,checked:statuses.length,approved:approved.length,items:statuses,limited:rows.length>=500};
+  return {presented:rows.length,checked:statuses.length,approved:approved.length,items:statuses,complete:result.complete};
 }
 function comparisonPersonCard(deputy,value,label,photo) {
   return '<article class="comparison-person"><div class="comparison-person-head">'+(photo?'<img src="'+safeUrl(photo)+'" alt="" loading="lazy">':'')+'<div><strong>'+escapeHtml(deputy.nome)+'</strong><small>'+escapeHtml([deputy.siglaPartido,deputy.siglaUf].filter(Boolean).join(' · '))+'</small></div></div><div class="comparison-value">'+value+'</div><div class="comparison-caption">'+label+'</div></article>';
@@ -225,19 +228,19 @@ async function runComparison() {
   try {
     if(metric==='expenses'){
       const [ra,rb]=await Promise.all([getExpenseTotal(idA,year),getExpenseTotal(idB,year)]);
-      const difference=Math.abs(ra.total-rb.total),higher=ra.total>=rb.total?a:b;
+      const difference=Math.abs(ra.total-rb.total),higher=ra.total>rb.total?a:ra.total<rb.total?b:null;
       $('comparisonResults').innerHTML='<div class="comparison-summary">'+
         comparisonPersonCard(a,money(ra.total),'Total líquido identificado · '+ra.records+' registros',a.urlFoto)+
         comparisonPersonCard(b,money(rb.total),'Total líquido identificado · '+rb.records+' registros',b.urlFoto)+'</div>'+
         renderComparisonChart(a.nome,b.nome,ra.total,rb.total,money,'Despesas declaradas em '+year)+
-        '<div class="comparison-difference"><strong>'+escapeHtml(higher.nome)+'</strong> apresenta '+money(difference)+' a mais em despesas registradas neste recorte. A comparação considera os registros retornados pela API para '+year+'; valores podem sofrer atualização ou glosa.</div>';
+        '<div class="comparison-difference">'+(higher?'<strong>'+escapeHtml(higher.nome)+'</strong> apresenta '+money(difference)+' a mais em despesas registradas.':'Os dois parlamentares apresentam o mesmo total de despesas neste recorte.')+' A comparação considera os registros retornados pela API para '+year+'; valores podem sofrer atualização ou glosa. '+(!ra.complete||!rb.complete?'Atenção: pelo menos uma consulta foi interrompida antes do fim da paginação.':'')+'</div>';
     } else {
-      const [ra,rb]=await Promise.all([getProposalStats(idA),getProposalStats(idB)]);
+      const [ra,rb]=await Promise.all([getProposalStats(idA,year),getProposalStats(idB,year)]);
       $('comparisonResults').innerHTML='<div class="comparison-summary">'+
-        comparisonPersonCard(a,ra.presented.toLocaleString('pt-BR'),ra.limited?'Até 500 proposições localizadas':'Proposições encontradas como autoria',a.urlFoto)+
-        comparisonPersonCard(b,rb.presented.toLocaleString('pt-BR'),rb.limited?'Até 500 proposições localizadas':'Proposições encontradas como autoria',b.urlFoto)+'</div>'+
-        renderComparisonChart(a.nome,b.nome,ra.presented,rb.presented,v=>v.toLocaleString('pt-BR'),'Proposições localizadas na API (limite de 500 por parlamentar)')+
-        '<div class="comparison-difference">Situação consultada individualmente em até 40 proposições por parlamentar: <strong>'+escapeHtml(a.nome)+': '+ra.approved+' aprovadas entre '+ra.checked+' verificadas</strong>; <strong>'+escapeHtml(b.nome)+': '+rb.approved+' aprovadas entre '+rb.checked+' verificadas</strong>. A contagem de aprovação é parcial e não deve ser interpretada como total histórico.</div>'+
+        comparisonPersonCard(a,ra.presented.toLocaleString('pt-BR'),'Proposições localizadas em '+year+(ra.complete?'':' · consulta parcial'),a.urlFoto)+
+        comparisonPersonCard(b,rb.presented.toLocaleString('pt-BR'),'Proposições localizadas em '+year+(rb.complete?'':' · consulta parcial'),b.urlFoto)+'</div>'+
+        renderComparisonChart(a.nome,b.nome,ra.presented,rb.presented,v=>v.toLocaleString('pt-BR'),'Proposições apresentadas em '+year)+
+        '<div class="comparison-difference">Situação consultada individualmente em até 40 proposições por parlamentar: <strong>'+escapeHtml(a.nome)+': '+ra.approved+' com situação contendo “aprovad” entre '+ra.checked+' verificadas</strong>; <strong>'+escapeHtml(b.nome)+': '+rb.approved+' entre '+rb.checked+' verificadas</strong>. Isso é uma amostra de situação processual, não o total de projetos aprovados. '+(!ra.complete||!rb.complete?'A paginação de proposições ficou incompleta.':'')+'</div>'+
         '<details class="comparison-detail-list"><summary>Ver situações verificadas</summary><ul>'+ra.items.slice(0,12).map(x=>'<li>'+escapeHtml(x.proposal.siglaTipo+' '+x.proposal.numero+'/'+x.proposal.ano)+' — '+escapeHtml(x.status)+'</li>').join('')+
         rb.items.slice(0,12).map(x=>'<li>'+escapeHtml(x.proposal.siglaTipo+' '+x.proposal.numero+'/'+x.proposal.ano)+' — '+escapeHtml(x.status)+'</li>').join('')+'</ul></details>';
     }
@@ -263,9 +266,19 @@ function updateThemeButton() {
   $('themeToggle').innerHTML='<span class="theme-icon">'+(dark?'☀':'☾')+'</span><span class="theme-text">'+(dark?'Tema claro':'Tema escuro')+'</span>';
   $('themeToggle').setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo noturno');
 }
-$('compareMetric').addEventListener('change',()=>{$('compareYearWrap').hidden=$('compareMetric').value!=='expenses';});
+$('compareMetric').addEventListener('change',()=>{$('compareYearLabel').textContent=$('compareMetric').value==='expenses'?'Ano da despesa':'Ano de apresentação';});
 $('compareBtn').addEventListener('click',runComparison);
 
 initTheme();
 populateYears();
-loadDashboard().then(fillComparisonDeputies);
+loadDashboard().then(async()=>{
+  fillComparisonDeputies();
+  try {
+    const result=await fetchAllPages('deputados?ordem=ASC&ordenarPor=nome',12,100);
+    state.allDeputies=result.rows;
+    fillComparisonDeputies(state.allDeputies);
+    if(!result.complete) showToast('Lista de parlamentares carregada parcialmente.');
+  } catch(error) {
+    showToast('Comparador usando a lista inicial de parlamentares; lista completa indisponível.');
+  }
+});
