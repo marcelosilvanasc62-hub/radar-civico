@@ -60,7 +60,12 @@ async function loadDashboard() {
   if (deputies.status === 'fulfilled') state.deputies = deputies.value.dados || [];
   if (proposals.status === 'fulfilled') state.proposals = proposals.value.dados || [];
   if (votes.status === 'fulfilled') state.votes = votes.value.dados || [];
-  renderDeputies(state.deputies); renderProposals(state.proposals); renderVotes(state.votes);
+  if (deputies.status === 'fulfilled') renderDeputies(state.deputies);
+  else $('deputyList').innerHTML = '<div class="empty-state error-state">Não foi possível carregar parlamentares. Tente atualizar.</div>';
+  if (proposals.status === 'fulfilled') renderProposals(state.proposals);
+  else $('proposalList').innerHTML = '<div class="empty-state error-state">Não foi possível carregar proposições.</div>';
+  if (votes.status === 'fulfilled') renderVotes(state.votes);
+  else $('voteList').innerHTML = '<div class="empty-state error-state">Não foi possível carregar votações.</div>';
   setMetric('deputyCount', deputies.status === 'fulfilled' ? state.deputies.length : '—');
   setMetric('partyCount', deputies.status === 'fulfilled' ? new Set(state.deputies.map(d => d.siglaPartido).filter(Boolean)).size : '—');
   setMetric('proposalCount', proposals.status === 'fulfilled' ? state.proposals.length : '—');
