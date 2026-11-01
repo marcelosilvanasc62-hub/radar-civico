@@ -88,6 +88,7 @@ function setDashboardVisible(visible) {
     document.querySelectorAll(selector).forEach(node => node.hidden = !visible);
   });
   $('profileView').hidden = visible;
+  if ($('workspaceViews')) $('workspaceViews').hidden = !visible;
   if (visible) window.scrollTo({top:0,behavior:'smooth'});
 }
 async function openDeputyProfile(id) {
@@ -116,10 +117,6 @@ async function openDeputyProfile(id) {
   renderTimeline();
   const failures = results.filter(result => result.status === 'rejected').length;
   if (!entries.length) $('timelineList').innerHTML = '<div class="timeline-empty">' + (failures === 3 ? 'Não foi possível consultar os registros agora. Tente novamente mais tarde.' : 'A API não retornou registros para este perfil nas consultas realizadas.') + '</div>';
-  $('profileAttendance').textContent='Não calculada';$('profileAttendanceNote').textContent='O percentual exige matrícula parlamentar e total de sessões plenárias elegíveis no período; não é estimado a partir de eventos.';
-  $('profilePixTotal').textContent='Não consolidado';$('profilePixNote').textContent='A identificação de emendas PIX e seus pagamentos depende da base de execução orçamentária autenticada.';
-  $('profileAmendmentTotal').textContent='Não consolidado';$('profileAmendmentNote').textContent='A consulta oficial permite filtrar autor, município beneficiado e valores pagos; ainda sem integração direta neste painel.';
-  $('profileAmendmentsList').innerHTML='<tr><td colspan="4">Não há dados de emendas carregados para este parlamentar. Consulte a fonte oficial para conferir município, favorecido, valor empenhado, liquidado e pago. <a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Abrir consulta de emendas ↗</a></td></tr>';
   if (failures) showToast(failures + ' consulta(s) de atividade não responderam.');
 }
 async function loadDashboard() {
