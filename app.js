@@ -1,6 +1,6 @@
 const API = 'https://dadosabertos.camara.leg.br/api/v2';
 const $ = (id) => document.getElementById(id);
-const state = { deputies: [], allDeputies: [], proposals: [], votes: [], timeline: [] };
+const state = { deputies: [], allDeputies: [], proposals: [], votes: [], timeline: [], comparisonScope: 'national', comparisonState: '', preferences: {} };
 const fmtDate = (value) => {
   if (!value) return 'Data não informada';
   const d = new Date(value);
@@ -116,6 +116,10 @@ async function openDeputyProfile(id) {
   renderTimeline();
   const failures = results.filter(result => result.status === 'rejected').length;
   if (!entries.length) $('timelineList').innerHTML = '<div class="timeline-empty">' + (failures === 3 ? 'Não foi possível consultar os registros agora. Tente novamente mais tarde.' : 'A API não retornou registros para este perfil nas consultas realizadas.') + '</div>';
+  $('profileAttendance').textContent='Não calculada';$('profileAttendanceNote').textContent='A frequência por sessão plenária requer matrícula parlamentar e consulta ao serviço específico de presenças.';
+  $('profilePixTotal').textContent='Não consolidado';$('profilePixNote').textContent='A identificação de emendas PIX e seus pagamentos depende da base de execução orçamentária autenticada.';
+  $('profileAmendmentTotal').textContent='Não consolidado';$('profileAmendmentNote').textContent='A consulta oficial permite filtrar autor, município beneficiado e valores pagos; ainda sem integração direta neste painel.';
+  $('profileAmendmentsList').innerHTML='<div class="amendment-empty">Não há dados de emendas carregados para este parlamentar. Consulte a fonte oficial para conferir município, favorecido, valor empenhado, liquidado e pago. <a href="https://portaldatransparencia.gov.br/emendas" target="_blank" rel="noopener">Abrir consulta de emendas ↗</a></div>';
   if (failures) showToast(failures + ' consulta(s) de atividade não responderam.');
 }
 async function loadDashboard() {
@@ -174,13 +178,43 @@ $('timelineFilter').addEventListener('change', renderTimeline);
 function money(value) {
   return Number(value || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
-function fillComparisonDeputies(deputies=state.allDeputies.length?state.allDeputies:state.deputies) {
-  const options=deputies.map(d=>'<option value="'+Number(d.id)+'">'+escapeHtml(d.nome)+' — '+escapeHtml(d.siglaUf||'')+'/'+escapeHtml(d.siglaPartido||'')+'</option>').join('');
-  ['compareDeputyA','compareDeputyB'].forEach(id=>{$(id).innerHTML='<option value="">Selecione um deputado</option>'+options;});
-  const first=deputies.find(d=>/nikolas ferreira/i.test(d.nome||''));
-  const second=deputies.find(d=>/kim kataguiri/i.test(d.nome||''));
-  if(first&&second){$('compareDeputyA').value=String(first.id);$('compareDeputyB').value=String(second.id);}
-  else if(deputies.length>1){$('compareDeputyA').value=String(deputies[0].id);$('compareDeputyB').value=String(deputies[1].id);}
+const brazilStates=[['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']];
+function comparisonDirectory(){const all=state.allDeputies.length?state.allDeputies:state.deputies;if(state.comparisonScope==='state')return state.comparisonState?all.filter(d=>d.siglaUf===state.comparisonState):[];return all;}
+function setCandidate(which,deputy){if(!deputy)return;$('compareDeputy'+which).value=String(deputy.id);$('compareSearch'+which).value=deputy.nome||'';$('compareParty'+which).value=deputy.siglaPartido||'';$('compareResults'+which).innerHTML='';}
+function renderCandidateResults(which){
+ const query=$('compareSearch'+which).value.trim().toLocaleLowerCase('pt-BR'),party=$('compareParty'+which).value,directory=comparisonDirectory();
+ let selected=$('compareDeputy'+which).value;
+ if(selected&&!directory.some(d=>String(d.id)===selected)){$('compareDeputy'+which).value='';$('compareSearch'+which).value='';selected='';}
+ const rows=directory.filter(d=>(!query||(d.nome||'').toLocaleLowerCase('pt-BR').includes(query))&&(!party||d.siglaPartido===party)).slice(0,10);
+ $('compareResults'+which).innerHTML=rows.length?rows.map(d=>'<button type="button" class="candidate-result" role="option" aria-selected="'+(String(d.id)===selected)+'" data-candidate-id="'+Number(d.id)+'" data-picker="'+which+'" style="--party-color:'+partyColorFor(d.siglaPartido)+'"><span class="candidate-result-party">'+escapeHtml(d.siglaPartido||'—')+'</span><span class="candidate-result-name">'+escapeHtml(d.nome||'Parlamentar')+'</span><small>'+escapeHtml(d.siglaUf||'UF não informada')+'</small></button>').join(''):'<div class="candidate-no-results">Nenhum parlamentar encontrado com esses filtros.</div>';
+}
+function updateComparisonScope(){
+ document.querySelectorAll('.scope-option').forEach(button=>{const active=button.dataset.scope===state.comparisonScope;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+ $('compareState').disabled=state.comparisonScope!=='state';
+ $('scopeHint').textContent=state.comparisonScope==='state'?(state.comparisonState?'Filtro regional: '+brazilStates.find(x=>x[0]===state.comparisonState)?.[1]+'; apenas deputados desta UF.':'Escolha uma UF para ativar o filtro regional.'):'Exibindo parlamentares de todos os estados.';
+}
+function populateComparisonFilters(){
+ const all=state.allDeputies.length?state.allDeputies:state.deputies;
+ $('compareState').innerHTML='<option value="">Escolha seu estado</option>'+brazilStates.map(([uf,name])=>'<option value="'+uf+'">'+name+'</option>').join('');
+ try{state.comparisonState=localStorage.getItem('radar-comparison-state')||'';}catch(error){}
+ $('compareState').value=state.comparisonState;
+ ['A','B'].forEach(which=>{const parties=[...new Set(all.map(d=>d.siglaPartido).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));$('compareParty'+which).innerHTML='<option value="">Todos os partidos</option>'+parties.map(p=>'<option value="'+escapeHtml(p)+'">'+escapeHtml(p)+'</option>').join('');});
+ const first=all.find(d=>/nikolas ferreira/i.test(d.nome||'')),second=all.find(d=>/kim kataguiri/i.test(d.nome||''));
+ if(first&&second){setCandidate('A',first);setCandidate('B',second);}
+ renderCandidateResults('A');renderCandidateResults('B');updateComparisonScope();
+}
+function initComparisonPickers(){
+ ['A','B'].forEach(which=>{
+  $('compareSearch'+which).addEventListener('input',()=>{$('compareDeputy'+which).value='';renderCandidateResults(which);});
+  $('compareParty'+which).addEventListener('change',()=>{$('compareDeputy'+which).value='';renderCandidateResults(which);});
+  $('compareSearch'+which).addEventListener('focus',()=>renderCandidateResults(which));
+  $('compareResults'+which).addEventListener('click',event=>{const button=event.target.closest('[data-candidate-id]');if(button){const deputy=comparisonDirectory().find(d=>Number(d.id)===Number(button.dataset.candidateId));setCandidate(which,deputy);}});
+  document.querySelector('[data-clear="'+which+'"]').addEventListener('click',()=>{$('compareDeputy'+which).value='';$('compareSearch'+which).value='';renderCandidateResults(which);});
+ });
+ document.querySelectorAll('.scope-option').forEach(button=>button.addEventListener('click',()=>{state.comparisonScope=button.dataset.scope;updateComparisonScope();renderCandidateResults('A');renderCandidateResults('B');try{localStorage.setItem('radar-comparison-scope',state.comparisonScope);}catch(error){}}));
+ $('compareState').addEventListener('change',()=>{state.comparisonState=$('compareState').value;try{localStorage.setItem('radar-comparison-state',state.comparisonState);}catch(error){}renderCandidateResults('A');renderCandidateResults('B');updateComparisonScope();});
+ try{state.comparisonScope=localStorage.getItem('radar-comparison-scope')||'national';}catch(error){}
+ updateComparisonScope();
 }
 function populateYears() {
   const year = new Date().getFullYear();
@@ -227,20 +261,17 @@ function comparisonPersonCard(deputy,value,label,photo) {
   const partyColor = partyColorFor(deputy.siglaPartido);
   return '<article class="comparison-person" style="--party-color:' + partyColor + '"><div class="comparison-person-head">'+(photo?'<img src="'+safeUrl(photo)+'" alt="" loading="lazy">':'')+'<div><strong>'+escapeHtml(deputy.nome)+'</strong><small>'+escapeHtml([deputy.siglaPartido,deputy.siglaUf].filter(Boolean).join(' · '))+'</small></div></div><div class="comparison-value">'+value+'</div><div class="comparison-caption">'+label+'</div></article>';
 }
-function renderComparisonChart(a,b,aValue,bValue,formatter,title) {
-  const max=Math.max(aValue,bValue,1);
-  const widthA=Math.max(aValue===0?0:2,aValue/max*100);
-  const widthB=Math.max(bValue===0?0:2,bValue/max*100);
-  const colorA=partyColorFor(a.siglaPartido), colorB=partyColorFor(b.siglaPartido);
-  return '<div class="comparison-chart"><div class="comparison-chart-title">'+title+'</div>'+
-    '<div class="chart-row" style="--bar-color:'+colorA+'"><div class="chart-name">'+escapeHtml(a.nome)+'</div><div class="chart-track"><div class="chart-bar" style="width:'+widthA+'%"></div></div><div class="chart-number">'+formatter(aValue)+'</div></div>'+
-    '<div class="chart-row" style="--bar-color:'+colorB+'"><div class="chart-name">'+escapeHtml(b.nome)+'</div><div class="chart-track"><div class="chart-bar" style="width:'+widthB+'%"></div></div><div class="chart-number">'+formatter(bValue)+'</div></div></div>';
+function renderComparisonChart(a,b,aValue,bValue,formatter,title){
+ const max=Math.max(aValue,bValue,1),widthA=Math.max(aValue===0?0:2,aValue/max*100),widthB=Math.max(bValue===0?0:2,bValue/max*100),colorA=partyColorFor(a.siglaPartido),colorB=partyColorFor(b.siglaPartido);
+ return '<div class="comparison-chart hud-chart"><div class="hud-chart-head"><div><span class="hud-kicker">COMPARATIVO · '+escapeHtml(title)+'</span><div class="comparison-chart-title">Indicador em análise</div></div><span class="hud-live">● DADOS CONSULTADOS</span></div>'+
+ '<div class="chart-row hud-chart-row" style="--bar-color:'+colorA+'"><div class="chart-name">'+escapeHtml(a.nome)+' <small>'+escapeHtml(a.siglaPartido||'')+'</small></div><div class="chart-track"><div class="chart-bar" style="--bar-width:'+widthA+'%;width:'+widthA+'%"></div></div><div class="chart-number">'+formatter(aValue)+'</div></div>'+
+ '<div class="chart-row hud-chart-row" style="--bar-color:'+colorB+'"><div class="chart-name">'+escapeHtml(b.nome)+' <small>'+escapeHtml(b.siglaPartido||'')+'</small></div><div class="chart-track"><div class="chart-bar" style="--bar-width:'+widthB+'%;width:'+widthB+'%"></div></div><div class="chart-number">'+formatter(bValue)+'</div></div><div class="hud-scale"><span>0</span><span>ESCALA RELATIVA AO MAIOR VALOR</span><span>100%</span></div></div>';
 }
 async function runComparison() {
   const idA=Number($('compareDeputyA').value),idB=Number($('compareDeputyB').value);
   const metric=$('compareMetric').value,year=Number($('compareYear').value);
   if(!idA||!idB||idA===idB){showToast('Selecione dois parlamentares diferentes.');return;}
-  const directory=state.allDeputies.length?state.allDeputies:state.deputies;
+  const directory=comparisonDirectory();
   const a=directory.find(d=>Number(d.id)===idA),b=directory.find(d=>Number(d.id)===idB);
   $('compareBtn').disabled=true;$('compareBtn').textContent='Consultando…';
   $('comparisonResults').innerHTML='<div class="comparison-loading">Consultando registros oficiais. Isso pode levar alguns segundos…</div>';
@@ -336,15 +367,17 @@ $('compareBtn').addEventListener('click',runComparison);
 
 initTheme();
 initNavigationDrawer();
+initComparisonPickers();
 populateYears();
 loadDashboard().then(async()=>{
-  fillComparisonDeputies();
+  populateComparisonFilters();
   try {
     const result=await fetchAllPages('deputados?ordem=ASC&ordenarPor=nome',12,100);
     state.allDeputies=result.rows;
-    fillComparisonDeputies(state.allDeputies);
+    populateComparisonFilters();
     if(!result.complete) showToast('Lista de parlamentares carregada parcialmente.');
   } catch(error) {
+    populateComparisonFilters();
     showToast('Comparador usando a lista inicial de parlamentares; lista completa indisponível.');
   }
 });
