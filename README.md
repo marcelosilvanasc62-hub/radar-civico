@@ -1,17 +1,44 @@
 # Radar Cívico
 
-Portal de transparência e acompanhamento da atividade parlamentar, começando pela Câmara dos Deputados.
+Portal independente de transparência e acompanhamento da atividade parlamentar brasileira, começando pela Câmara dos Deputados.
 
-## Estado atual
+## Versão atual — MVP visual
 
-O projeto está na etapa **M0 — diagnóstico da API de Dados Abertos da Câmara**. O objetivo é validar endpoints, paginação, estruturas JSON e metadados antes de definir a ingestão definitiva.
+O repositório contém uma primeira interface web responsiva que consulta diretamente a API oficial de Dados Abertos da Câmara dos Deputados.
 
-## Requisitos
+### O que já funciona
+- Painel inicial com indicadores da amostra consultada.
+- Listagem de parlamentares e busca por nome.
+- Consulta de proposições recentes.
+- Consulta de votações recentes.
+- Links para as fontes oficiais.
+- Atualização manual dos dados.
+- Layout adaptado para computador e celular.
 
-- Python 3.9 ou superior
-- Nenhuma dependência externa para o diagnóstico inicial
+> Os indicadores exibem a quantidade de registros retornados em cada consulta, não totais oficiais da legislatura. Se a API estiver indisponível, o painel informa a falha em vez de inventar valores.
 
-## Executar
+## Visualizar localmente
+
+Não é necessário instalar dependências. Com Python 3 instalado, na pasta do projeto execute:
+
+```bash
+python3 -m http.server 8000
+```
+
+Abra no navegador: http://localhost:8000
+
+No GitHub Codespaces, execute o mesmo comando no terminal e abra a porta 8000 na aba **Ports**.
+
+## Publicação no GitHub Pages
+
+O site é estático e pode ser publicado pelo GitHub Pages usando a branch `main` e a pasta raiz (`/`). No repositório, acesse **Settings → Pages**, selecione **Deploy from a branch**, escolha `main` e `/ (root)`, e salve.
+
+Depois da publicação, o endereço padrão será:
+https://marcelosilvanasc62-hub.github.io/radar-civico/
+
+## Diagnóstico da API (M0)
+
+O projeto também mantém o script de diagnóstico:
 
 ```bash
 python3 diagnostico_camara.py --rapido
@@ -23,13 +50,11 @@ Para executar a bateria ampliada:
 python3 diagnostico_camara.py
 ```
 
-Os resultados são gravados em `m0_resultados/`:
-- `resumo.txt`
-- `resultados.json`
-- `amostras/*.json`
+Os resultados são gravados em `m0_resultados/`.
 
-## Princípios
+## Fontes e princípios
 
+- API oficial: https://dadosabertos.camara.leg.br/api/v2/
 - Priorizar fontes oficiais e dados verificáveis.
 - Começar com requisições somente de leitura.
 - Respeitar limites da API, usar pausas e tentativas controladas.
@@ -38,7 +63,8 @@ Os resultados são gravados em `m0_resultados/`:
 
 ## Próximas etapas
 
-1. Executar o M0 e revisar os resultados.
-2. Documentar os endpoints aprovados.
-3. Definir modelo de dados e rotina de atualização.
-4. Implementar backend e interface do portal.
+1. Validar o MVP em diferentes dispositivos.
+2. Revisar os endpoints e a cobertura dos dados.
+3. Criar páginas de detalhe para parlamentares, proposições e votações.
+4. Implementar histórico, filtros e metodologia dos indicadores.
+5. Planejar backend e rotina de atualização sem sobrecarregar a API.
