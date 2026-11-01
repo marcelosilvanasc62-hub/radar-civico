@@ -226,7 +226,8 @@ async function runComparison() {
   const idA=Number($('compareDeputyA').value),idB=Number($('compareDeputyB').value);
   const metric=$('compareMetric').value,year=Number($('compareYear').value);
   if(!idA||!idB||idA===idB){showToast('Selecione dois parlamentares diferentes.');return;}
-  const directory=state.allDeputies.length?state.allDeputies:state.deputies;\n  const a=directory.find(d=>Number(d.id)===idA),b=directory.find(d=>Number(d.id)===idB);
+  const directory=state.allDeputies.length?state.allDeputies:state.deputies;
+  const a=directory.find(d=>Number(d.id)===idA),b=directory.find(d=>Number(d.id)===idB);
   $('compareBtn').disabled=true;$('compareBtn').textContent='Consultando…';
   $('comparisonResults').innerHTML='<div class="comparison-loading">Consultando registros oficiais. Isso pode levar alguns segundos…</div>';
   try {
