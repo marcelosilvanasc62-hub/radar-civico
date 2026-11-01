@@ -6,7 +6,7 @@
   <title>Radar Cívico — Dados legislativos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
 <header class="site-header">
@@ -40,8 +40,19 @@
     <div id="parliamentarians" class="people-grid"></div>
     <button id="loadMore" class="load-more" hidden>Carregar mais resultados</button>
   </section>
+  <section id="profile" class="profile-section" hidden aria-live="polite">
+    <div class="profile-topline"><div><div class="eyebrow">02 / FICHA INDIVIDUAL</div><h2>Perfil parlamentar</h2></div><button id="closeProfile" class="secondary-button">Fechar perfil ×</button></div>
+    <div id="profileHeader" class="profile-header"></div>
+    <div class="profile-grid">
+      <article class="profile-panel"><div class="panel-heading"><div><span class="eyebrow">ATIVIDADE LEGISLATIVA</span><h3>Votações nominais</h3></div><span class="panel-unit">REGISTROS POR MÊS</span></div><div id="votesChart" class="chart-area"></div><p class="method-caption">Série de registros de votação retornados pela API para o parlamentar. Não representa, isoladamente, percentual de presença em todas as sessões.</p><a class="source-link" href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank" rel="noopener">Fonte e documentação da API ↗</a></article>
+      <article class="profile-panel"><div class="panel-heading"><div><span class="eyebrow">TRANSPARÊNCIA DE DESPESAS</span><h3>Cota Parlamentar</h3></div><span class="panel-unit">VALOR DOCUMENTADO</span></div><div id="expensesChart" class="chart-area"></div><p class="method-caption">Soma mensal dos valores de documentos de despesa disponibilizados pela Câmara no período consultado. Valores podem sofrer atualização e não equivalem a limite autorizado.</p><a class="source-link" href="https://www.camara.leg.br/transparencia/gastos-parlamentares" target="_blank" rel="noopener">Portal de transparência da Câmara ↗</a></article>
+      <article class="profile-panel"><div class="panel-heading"><div><span class="eyebrow">PRODUÇÃO LEGISLATIVA</span><h3>Proposições de autoria</h3></div><span class="panel-unit">REGISTROS CONSULTADOS</span></div><div id="proposalsSummary" class="metric-summary">Consultando…</div><p class="method-caption">Quantidade de proposições retornadas no endpoint individual de autoria. A consulta não atribui peso, mérito ou resultado às matérias.</p><a class="source-link" href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank" rel="noopener">Fonte e documentação da API ↗</a></article>
+      <article class="profile-panel contact-panel"><div class="panel-heading"><div><span class="eyebrow">CANAIS INSTITUCIONAIS</span><h3>Contato do gabinete</h3></div></div><div id="contactDetails" class="contact-details">Consultando dados oficiais…</div><p class="method-caption">Informações de contato conforme cadastro institucional da Câmara dos Deputados.</p></article>
+    </div>
+    <div class="profile-footnote"><strong>Como ler esta ficha</strong><p>Os gráficos refletem os registros disponíveis na consulta e no período indicado. Ausência de registro não deve ser interpretada automaticamente como ausência de atividade. Consulte os links oficiais para conferir dados, critérios e eventuais atualizações.</p></div>
+  </section>
   <section class="method-note"><span class="eyebrow">NOTA METODOLÓGICA</span><p>Os resultados são apresentados conforme os campos disponibilizados pela instituição de origem. Cores são recursos de identificação visual de siglas partidárias, não representam avaliação ou classificação. A busca da Câmara respeita o limite de 100 registros por requisição da API.</p></section>
 </main>
 <footer><div class="footer-brand">RADAR CÍVICO</div><p>Projeto independente de consulta a informações públicas. Não representa a Câmara dos Deputados, o Senado Federal ou qualquer partido.</p><div class="footer-links"><a href="https://dadosabertos.camara.leg.br/swagger/api.html">API da Câmara ↗</a><a href="https://www12.senado.leg.br/dados-abertos">Dados Abertos do Senado ↗</a></div><small>Fontes institucionais · Consulta em <span id="updatedAt">—</span></small></footer>
-<script src="app.js?v=1" defer></script>
+<script src="app.js?v=2" defer></script>
 </body></html>
