@@ -21,9 +21,11 @@
       <a href="#parlamentares">Parlamentares</a>
       <a href="#proposicoes">Proposições</a>
       <a href="#votacoes">Votações</a>
+      <a href="#comparar">Comparar</a>
     </nav>
     <div class="top-actions">
       <span class="live-dot"></span><span class="live-label">DADOS PÚBLICOS</span>
+      <button id="themeToggle" class="theme-toggle" type="button" aria-label="Ativar modo noturno" title="Alternar tema"><span class="theme-icon">☾</span><span class="theme-text">Tema escuro</span></button>
       <button id="refreshBtn" class="refresh-btn" type="button" title="Atualizar dados">↻ <span>Atualizar</span></button>
     </div>
   </header>
@@ -64,9 +66,29 @@
         <div class="profile-identity"><div class="eyebrow">ATUAÇÃO PÚBLICA</div><h2 id="profileName">Carregando perfil…</h2><p id="profileMeta">Consultando dados oficiais</p><a id="profileSource" href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Perfil na Câmara ↗</a></div>
         <div class="profile-summary"><span>REGISTROS NA LINHA DO TEMPO</span><strong id="timelineCount">—</strong><small>Itens retornados pelas consultas disponíveis</small></div>
       </div>
-      <div class="timeline-toolbar"><div><div class="eyebrow">ACOMPANHAMENTO CRONOLÓGICO</div><h2>Linha do tempo</h2><p>Atividades e registros públicos organizados por data, com acesso às fontes oficiais.</p></div><label class="timeline-filter">Tipo de registro<select id="timelineFilter"><option value="todos">Todos os registros</option><option value="evento">Eventos</option><option value="discurso">Discursos</option><option value="despesa">Despesas</option><option value="evento">Eventos</option></select></label></div>
+      <div class="timeline-toolbar"><div><div class="eyebrow">ACOMPANHAMENTO CRONOLÓGICO</div><h2>Linha do tempo</h2><p>Atividades e registros públicos organizados por data, com acesso às fontes oficiais.</p></div><label class="timeline-filter">Tipo de registro<select id="timelineFilter"><option value="todos">Todos os registros</option><option value="evento">Eventos</option><option value="discurso">Discursos</option><option value="despesa">Despesas</option></select></label></div>
       <div id="timelineList" class="timeline-list"><div class="empty-state">Carregando atividade parlamentar…</div></div>
       <div class="timeline-footnote">A linha do tempo reúne registros retornados pela API de Dados Abertos da Câmara. A ausência de um item não significa necessariamente que a atividade não ocorreu; depende dos dados e endpoints disponíveis.</div>
+    </section>
+
+
+    <section class="comparison-section" id="comparar">
+      <div class="comparison-heading">
+        <div><div class="eyebrow">ANÁLISE COMPARATIVA</div><h2>Compare a atuação parlamentar</h2><p>Selecione dois deputados para analisar despesas e produção legislativa com base nos registros oficiais.</p></div>
+        <span class="comparison-source">CÂMARA DOS DEPUTADOS · API OFICIAL</span>
+      </div>
+      <div class="comparison-controls">
+        <label>Parlamentar 1<select id="compareDeputyA"><option value="">Selecione um deputado</option></select></label>
+        <div class="versus">×</div>
+        <label>Parlamentar 2<select id="compareDeputyB"><option value="">Selecione um deputado</option></select></label>
+        <label class="comparison-metric-label">Indicador<select id="compareMetric"><option value="expenses">Gastos da cota parlamentar</option><option value="proposals">Proposições apresentadas e aprovadas</option></select></label>
+        <label id="compareYearWrap">Ano<select id="compareYear"></select></label>
+        <button id="compareBtn" type="button">Comparar dados</button>
+      </div>
+      <div id="comparisonResults" class="comparison-results" aria-live="polite">
+        <div class="comparison-placeholder"><span>↔</span><strong>Escolha dois parlamentares</strong><p>O resultado aparecerá aqui, com valores, diferenças e gráfico comparativo.</p></div>
+      </div>
+      <p class="comparison-note">Os resultados dependem da disponibilidade e da atualização dos registros da Câmara. Despesas consideram os valores líquidos quando informados. Proposições aprovadas só serão contabilizadas quando a situação estiver identificada no registro consultado; autoria compartilhada pode existir.</p>
     </section>
 
     <section class="content-grid">
