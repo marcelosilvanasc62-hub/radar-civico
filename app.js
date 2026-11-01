@@ -23,13 +23,24 @@ function safeUrl(value, fallback = 'https://dadosabertos.camara.leg.br/') {
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function partyColorFor(party) {
+  const colors = {
+    PT:'#E32636',PL:'#2455A4',UNIÃO:'#2454A6',UNIAO:'#2454A6',PP:'#2455A4',PSD:'#F28C28',
+    MDB:'#2E9B57',REPUBLICANOS:'#2455A4',PSB:'#E32636',PDT:'#D92B35',PSOL:'#E5C52B',
+    PODE:'#4C3B8F',PODEMOS:'#4C3B8F',NOVO:'#F07824',PV:'#23834B',PCDOB:'#C9252D',
+    CIDADANIA:'#D52B36',AVANTE:'#1E70A6',SOLIDARIEDADE:'#E3B928',REDE:'#2B9B72',
+    PSDB:'#2D78B7',PRD:'#265A9C',AGIR:'#E47A24',MISSÃO:'#5A4B8A',MISSAO:'#5A4B8A'
+  };
+  return colors[String(party || '').trim().toUpperCase()] || '#778795';
+}
 function renderDeputies(items) {
   const host = $('deputyList');
   if (!items.length) { host.innerHTML = '<div class="empty-state">Nenhum parlamentar encontrado nesta consulta.</div>'; return; }
   host.innerHTML = items.slice(0, 12).map(d => {
     const initials = (d.nome || '??').split(' ').slice(0,2).map(x => x[0]).join('').toUpperCase();
     const photo = d.urlFoto ? '<img class="avatar" src="' + safeUrl(d.urlFoto) + '" alt="" loading="lazy">' : '<span class="avatar avatar-fallback">' + initials + '</span>';
-    return '<div class="deputy-item"><button class="deputy-open" type="button" data-deputy-id="' + Number(d.id) + '" aria-label="Abrir perfil de ' + escapeHtml(d.nome || 'parlamentar') + '">' + photo + '<span class="person"><strong>' + escapeHtml(d.nome || 'Nome não informado') + '</strong><small>' + escapeHtml(d.siglaUf || '—') + ' · ' + escapeHtml(d.siglaPartido || 'Partido não informado') + '</small></span></button><span class="party-tag">' + escapeHtml(d.siglaPartido || '—') + '</span></div>';
+    const partyColor = partyColorFor(d.siglaPartido);
+    return '<div class="deputy-item" style="--party-color:' + partyColor + '"><button class="deputy-open" type="button" data-deputy-id="' + Number(d.id) + '" aria-label="Abrir perfil de ' + escapeHtml(d.nome || 'parlamentar') + '">' + photo + '<span class="person"><strong>' + escapeHtml(d.nome || 'Nome não informado') + '</strong><small>' + escapeHtml(d.siglaUf || '—') + ' · ' + escapeHtml(d.siglaPartido || 'Partido não informado') + '</small></span></button><span class="party-tag">' + escapeHtml(d.siglaPartido || '—') + '</span></div>';
   }).join('');
 }
 function renderProposals(items) {
@@ -85,6 +96,7 @@ async function openDeputyProfile(id) {
   setDashboardVisible(false);
   $('profileName').textContent = deputy.nome || 'Perfil parlamentar';
   $('profileMeta').textContent = [deputy.siglaPartido, deputy.siglaUf].filter(Boolean).join(' · ') || 'Consultando dados oficiais';
+  $('profileView').style.setProperty('--party-color', partyColorFor(deputy.siglaPartido));
   $('profileSource').href = 'https://www.camara.leg.br/deputados/' + id;
   const photo = $('profilePhoto');
   if (deputy.urlFoto) { photo.src = safeUrl(deputy.urlFoto); photo.hidden = false; } else photo.hidden = true;
@@ -212,15 +224,17 @@ async function getProposalStats(id,year) {
   return {presented:rows.length,checked:statuses.length,approved:approved.length,items:statuses,complete:result.complete};
 }
 function comparisonPersonCard(deputy,value,label,photo) {
-  return '<article class="comparison-person"><div class="comparison-person-head">'+(photo?'<img src="'+safeUrl(photo)+'" alt="" loading="lazy">':'')+'<div><strong>'+escapeHtml(deputy.nome)+'</strong><small>'+escapeHtml([deputy.siglaPartido,deputy.siglaUf].filter(Boolean).join(' · '))+'</small></div></div><div class="comparison-value">'+value+'</div><div class="comparison-caption">'+label+'</div></article>';
+  const partyColor = partyColorFor(deputy.siglaPartido);
+  return '<article class="comparison-person" style="--party-color:' + partyColor + '"><div class="comparison-person-head">'+(photo?'<img src="'+safeUrl(photo)+'" alt="" loading="lazy">':'')+'<div><strong>'+escapeHtml(deputy.nome)+'</strong><small>'+escapeHtml([deputy.siglaPartido,deputy.siglaUf].filter(Boolean).join(' · '))+'</small></div></div><div class="comparison-value">'+value+'</div><div class="comparison-caption">'+label+'</div></article>';
 }
-function renderComparisonChart(aName,bName,aValue,bValue,formatter,title) {
+function renderComparisonChart(a,b,aValue,bValue,formatter,title) {
   const max=Math.max(aValue,bValue,1);
   const widthA=Math.max(aValue===0?0:2,aValue/max*100);
   const widthB=Math.max(bValue===0?0:2,bValue/max*100);
+  const colorA=partyColorFor(a.siglaPartido), colorB=partyColorFor(b.siglaPartido);
   return '<div class="comparison-chart"><div class="comparison-chart-title">'+title+'</div>'+
-    '<div class="chart-row"><div class="chart-name">'+escapeHtml(aName)+'</div><div class="chart-track"><div class="chart-bar" style="width:'+widthA+'%"></div></div><div class="chart-number">'+formatter(aValue)+'</div></div>'+
-    '<div class="chart-row"><div class="chart-name">'+escapeHtml(bName)+'</div><div class="chart-track"><div class="chart-bar" style="width:'+widthB+'%"></div></div><div class="chart-number">'+formatter(bValue)+'</div></div></div>';
+    '<div class="chart-row" style="--bar-color:'+colorA+'"><div class="chart-name">'+escapeHtml(a.nome)+'</div><div class="chart-track"><div class="chart-bar" style="width:'+widthA+'%"></div></div><div class="chart-number">'+formatter(aValue)+'</div></div>'+
+    '<div class="chart-row" style="--bar-color:'+colorB+'"><div class="chart-name">'+escapeHtml(b.nome)+'</div><div class="chart-track"><div class="chart-bar" style="width:'+widthB+'%"></div></div><div class="chart-number">'+formatter(bValue)+'</div></div></div>';
 }
 async function runComparison() {
   const idA=Number($('compareDeputyA').value),idB=Number($('compareDeputyB').value);
@@ -237,14 +251,14 @@ async function runComparison() {
       $('comparisonResults').innerHTML='<div class="comparison-summary">'+
         comparisonPersonCard(a,money(ra.total),'Total líquido identificado · '+ra.records+' registros',a.urlFoto)+
         comparisonPersonCard(b,money(rb.total),'Total líquido identificado · '+rb.records+' registros',b.urlFoto)+'</div>'+
-        renderComparisonChart(a.nome,b.nome,ra.total,rb.total,money,'Despesas declaradas em '+year)+
+        renderComparisonChart(a,b,ra.total,rb.total,money,'Despesas declaradas em '+year)+
         '<div class="comparison-difference">'+(higher?'<strong>'+escapeHtml(higher.nome)+'</strong> apresenta '+money(difference)+' a mais em despesas registradas.':'Os dois parlamentares apresentam o mesmo total de despesas neste recorte.')+' A comparação considera os registros retornados pela API para '+year+'; valores podem sofrer atualização ou glosa. '+(!ra.complete||!rb.complete?'Atenção: pelo menos uma consulta foi interrompida antes do fim da paginação.':'')+'</div>';
     } else {
       const [ra,rb]=await Promise.all([getProposalStats(idA,year),getProposalStats(idB,year)]);
       $('comparisonResults').innerHTML='<div class="comparison-summary">'+
         comparisonPersonCard(a,ra.presented.toLocaleString('pt-BR'),'Proposições localizadas em '+year+(ra.complete?'':' · consulta parcial'),a.urlFoto)+
         comparisonPersonCard(b,rb.presented.toLocaleString('pt-BR'),'Proposições localizadas em '+year+(rb.complete?'':' · consulta parcial'),b.urlFoto)+'</div>'+
-        renderComparisonChart(a.nome,b.nome,ra.presented,rb.presented,v=>v.toLocaleString('pt-BR'),'Proposições apresentadas em '+year)+
+        renderComparisonChart(a,b,ra.presented,rb.presented,v=>v.toLocaleString('pt-BR'),'Proposições apresentadas em '+year)+
         '<div class="comparison-difference">Situação consultada individualmente em até 40 proposições por parlamentar: <strong>'+escapeHtml(a.nome)+': '+ra.approved+' com situação contendo “aprovad” entre '+ra.checked+' verificadas</strong>; <strong>'+escapeHtml(b.nome)+': '+rb.approved+' entre '+rb.checked+' verificadas</strong>. Isso é uma amostra de situação processual, não o total de projetos aprovados. '+(!ra.complete||!rb.complete?'A paginação de proposições ficou incompleta.':'')+'</div>'+
         '<details class="comparison-detail-list"><summary>Ver situações verificadas</summary><ul>'+ra.items.slice(0,12).map(x=>'<li>'+escapeHtml(x.proposal.siglaTipo+' '+x.proposal.numero+'/'+x.proposal.ano)+' — '+escapeHtml(x.status)+'</li>').join('')+
         rb.items.slice(0,12).map(x=>'<li>'+escapeHtml(x.proposal.siglaTipo+' '+x.proposal.numero+'/'+x.proposal.ano)+' — '+escapeHtml(x.status)+'</li>').join('')+'</ul></details>';
@@ -254,32 +268,68 @@ async function runComparison() {
     showToast('Falha ao consultar os dados para comparação.');
   } finally {$('compareBtn').disabled=false;$('compareBtn').textContent='Comparar dados';}
 }
-function applyTheme(dark) {
+const defaultPreferences = {theme:'dark',accent:'cyan',density:'comfortable',motion:true};
+function readPreferences() {
+  try { return {...defaultPreferences,...JSON.parse(localStorage.getItem('radar-preferences') || '{}')}; }
+  catch(error) { return {...defaultPreferences}; }
+}
+function savePreferences() {
+  try { localStorage.setItem('radar-preferences',JSON.stringify(state.preferences)); } catch(error) {}
+}
+state.preferences = readPreferences();
+function applyTheme(mode) {
+  const prefersDark=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)').matches:false;
+  const dark=mode==='dark'||(mode==='system'&&prefersDark);
   document.documentElement.dataset.theme=dark?'dark':'light';
   document.body.classList.toggle('dark-theme',dark);
   document.documentElement.style.colorScheme=dark?'dark':'light';
   updateThemeButton();
 }
+function applyPreferences() {
+  const root=document.documentElement;
+  root.dataset.accent=state.preferences.accent;
+  root.dataset.density=state.preferences.density;
+  root.dataset.motion=state.preferences.motion?'on':'off';
+  applyTheme(state.preferences.theme);
+  $('themeSelect').value=state.preferences.theme;
+  $('accentSelect').value=state.preferences.accent;
+  $('densitySelect').value=state.preferences.density;
+  $('motionToggle').checked=state.preferences.motion;
+}
 function initTheme() {
-  let saved=null;
-  try{saved=localStorage.getItem('radar-theme');}catch(error){}
-  const prefersDark=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)').matches:false;
-  applyTheme(saved==='dark'||(saved===null&&prefersDark));
+  applyPreferences();
   $('themeToggle').addEventListener('click',()=>{
-    const next=document.documentElement.dataset.theme!=='dark';
-    applyTheme(next);
-    try{localStorage.setItem('radar-theme',next?'dark':'light');}catch(error){}
+    const dark=document.documentElement.dataset.theme==='dark';
+    state.preferences.theme=dark?'light':'dark';
+    $('themeSelect').value=state.preferences.theme;
+    savePreferences();applyTheme(state.preferences.theme);
   });
+  $('themeSelect').addEventListener('change',event=>{state.preferences.theme=event.target.value;savePreferences();applyTheme(state.preferences.theme);});
+  $('accentSelect').addEventListener('change',event=>{state.preferences.accent=event.target.value;savePreferences();applyPreferences();});
+  $('densitySelect').addEventListener('change',event=>{state.preferences.density=event.target.value;savePreferences();applyPreferences();});
+  $('motionToggle').addEventListener('change',event=>{state.preferences.motion=event.target.checked;savePreferences();applyPreferences();});
+  if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if(state.preferences.theme==='system')applyTheme('system');});}
 }
 function updateThemeButton() {
   const dark=document.documentElement.dataset.theme==='dark';
   $('themeToggle').innerHTML='<span class="theme-icon">'+(dark?'☀':'☾')+'</span><span class="theme-text">'+(dark?'Tema claro':'Tema escuro')+'</span>';
   $('themeToggle').setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo noturno');
 }
+function initNavigationDrawer() {
+  const drawer=$('sideDrawer'),backdrop=$('drawerBackdrop'),toggle=$('sidebarToggle');
+  const close=()=>{drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');backdrop.hidden=true;toggle.setAttribute('aria-expanded','false');document.body.classList.remove('drawer-open');};
+  const open=()=>{drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');backdrop.hidden=false;toggle.setAttribute('aria-expanded','true');document.body.classList.add('drawer-open');};
+  toggle.addEventListener('click',()=>drawer.classList.contains('open')?close():open());
+  $('drawerClose').addEventListener('click',close);backdrop.addEventListener('click',close);
+  drawer.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',close));
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')close();});
+  document.querySelector('.appearance-settings').addEventListener('toggle',event=>{if(event.target.open){const closeOnOutside=click=>{if(!event.target.contains(click.target)){event.target.open=false;document.removeEventListener('click',closeOnOutside);}};setTimeout(()=>document.addEventListener('click',closeOnOutside),0);}});
+}
 $('compareMetric').addEventListener('change',()=>{$('compareYearLabel').textContent=$('compareMetric').value==='expenses'?'Ano da despesa':'Ano de apresentação';});
 $('compareBtn').addEventListener('click',runComparison);
 
 initTheme();
+initNavigationDrawer();
 populateYears();
 loadDashboard().then(async()=>{
   fillComparisonDeputies();
