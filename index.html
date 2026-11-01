@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Radar Cívico — consulta factual de dados legislativos oficiais.">
+  <title>Radar Cívico — Dados legislativos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="#" aria-label="Radar Cívico, início"><span class="brand-mark">◉</span><span>RADAR<span class="brand-light"> CÍVICO</span><small>DADOS LEGISLATIVOS</small></span></a>
+  <nav class="house-switch" aria-label="Casa legislativa">
+    <button class="house-button active" data-house="camara" aria-pressed="true">Deputados Federais</button>
+    <button class="house-button" data-house="senado" aria-pressed="false">Senadores</button>
+  </nav>
+  <div class="header-tools">
+    <label class="sr-only" for="themeToggle">Tema</label><button id="themeToggle" class="icon-button" title="Alternar tema" aria-label="Alternar tema">◐</button>
+    <a class="agenda-link" href="https://www.camara.leg.br/agenda" target="_blank" rel="noopener">Agenda oficial ↗</a>
+  </div>
+</header>
+<main>
+  <section class="intro">
+    <div class="eyebrow"><span class="live-dot"></span> CONSULTA A FONTES PÚBLICAS</div>
+    <h1>O Legislativo,<br><em>em dados.</em></h1>
+    <p class="intro-copy">Consulte a composição parlamentar e identifique informações públicas diretamente nas bases oficiais. Cada registro mantém sua origem institucional.</p>
+    <div class="source-line"><span>FONTE PRINCIPAL</span><a href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank" rel="noopener">Dados Abertos — Câmara dos Deputados ↗</a></div>
+  </section>
+  <section class="directory" aria-labelledby="directoryTitle">
+    <div class="section-heading"><div><div class="eyebrow">01 / DIRETÓRIO PARLAMENTAR</div><h2 id="directoryTitle">Parlamentares</h2></div><div id="resultCount" class="result-count">Aguardando consulta</div></div>
+    <div class="filters">
+      <label class="filter-label" for="stateFilter">ESTADO / UF<select id="stateFilter"><option value="">Todos os estados</option></select></label>
+      <div class="search-wrap"><label class="filter-label" for="searchInput">BUSCAR POR NOME OU PARTIDO</label><div class="search-control"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Ex.: nome parlamentar ou sigla" autocomplete="off"><button id="clearSearch" aria-label="Limpar busca" title="Limpar">×</button></div><div id="suggestions" class="suggestions" role="listbox" hidden></div></div>
+      <button id="searchButton" class="primary-button">Buscar <span>→</span></button>
+    </div>
+    <div class="filter-meta"><span id="filterSummary">Todos os estados · Deputados federais</span><span>Atualização consultada em tempo real</span></div>
+    <div id="partyLegend" class="party-legend" aria-label="Legenda de cores de partidos"></div>
+    <div id="status" class="status" role="status" aria-live="polite">Carregando dados da Câmara…</div>
+    <div id="parliamentarians" class="people-grid"></div>
+    <button id="loadMore" class="load-more" hidden>Carregar mais resultados</button>
+  </section>
+  <section class="method-note"><span class="eyebrow">NOTA METODOLÓGICA</span><p>Os resultados são apresentados conforme os campos disponibilizados pela instituição de origem. Cores são recursos de identificação visual de siglas partidárias, não representam avaliação ou classificação. A busca da Câmara respeita o limite de 100 registros por requisição da API.</p></section>
+</main>
+<footer><div class="footer-brand">RADAR CÍVICO</div><p>Projeto independente de consulta a informações públicas. Não representa a Câmara dos Deputados, o Senado Federal ou qualquer partido.</p><div class="footer-links"><a href="https://dadosabertos.camara.leg.br/swagger/api.html">API da Câmara ↗</a><a href="https://www12.senado.leg.br/dados-abertos">Dados Abertos do Senado ↗</a></div><small>Fontes institucionais · Consulta em <span id="updatedAt">—</span></small></footer>
+<script src="app.js?v=1" defer></script>
+</body></html>
