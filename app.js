@@ -420,19 +420,19 @@ function applyPreferences() {
 function initGroupedWorkspace(){
  const main=document.querySelector('main.shell');
  const hero=main.querySelector('.hero'),heading=main.querySelector('.section-heading'),stats=main.querySelector('.stats-grid');
- const content=main.querySelector('.content-grid'),votes=main.querySelector('.votes-panel'),compare=main.querySelector('.comparison-section'),method=main.querySelector('.methodology');
+ const content=main.querySelector('.content-grid'),votes=main.querySelector('.votes-panel'),sources=main.querySelector('#fontes'),method=main.querySelector('.methodology');
  const views=document.createElement('div');views.id='workspaceViews';views.className='workspace-views';
  const home=document.createElement('section');home.className='workspace-view active';home.dataset.view='home';
  const activity=document.createElement('section');activity.className='workspace-view';activity.dataset.view='activity';
  const analysis=document.createElement('section');analysis.className='workspace-view';analysis.dataset.view='analysis';
  [hero,heading,stats,method].forEach(node=>node&&home.appendChild(node));
  [content,votes].forEach(node=>node&&activity.appendChild(node));
- if(compare)analysis.appendChild(compare);
+ if(sources)analysis.appendChild(sources);
  views.append(home,activity,analysis);
  const profile=main.querySelector('#profileView');
  profile.insertAdjacentElement('afterend',views);
  const subnav=document.createElement('div');subnav.id='workspaceSubnav';subnav.className='workspace-subnav';subnav.setAttribute('aria-label','Seções da área');
- const links={home:[['Visão geral','#visao-geral']],activity:[['Parlamentares','#parlamentares'],['Proposições','#proposicoes'],['Votações','#votacoes']],analysis:[['Comparar parlamentares','#comparar']]};
+ const links={home:[['Visão geral','#visao-geral']],activity:[['Parlamentares','#parlamentares'],['Proposições','#proposicoes'],['Votações','#votacoes']],analysis:[['Fontes e método','#fontes']]};
  const setView=(name,anchor)=>{
   if(!profile.hidden){setDashboardVisible(true);}
   views.querySelectorAll('.workspace-view').forEach(v=>v.classList.toggle('active',v.dataset.view===name));
@@ -476,15 +476,11 @@ function initNavigationDrawer() {
   document.addEventListener('keydown',event=>{if(event.key==='Escape')close();});
   document.querySelector('.appearance-settings').addEventListener('toggle',event=>{if(event.target.open){const closeOnOutside=click=>{if(!event.target.contains(click.target)){event.target.open=false;document.removeEventListener('click',closeOnOutside);}};setTimeout(()=>document.addEventListener('click',closeOnOutside),0);}});
 }
-$('compareMetric').addEventListener('change',()=>{$('compareYearLabel').textContent=$('compareMetric').value==='expenses'?'Ano da despesa':'Ano de apresentação';});
-$('compareBtn').addEventListener('click',runComparison);
 
 initGroupedWorkspace();
 initTheme();
 initNavigationDrawer();
-initComparisonPickers();
 populateYears();
 loadDashboard().then(()=>{
- populateComparisonFilters();
  $('deputyFoot').textContent=state.deputies.length+' registros na amostra inicial · pesquise para consultar toda a base disponível';
 });
