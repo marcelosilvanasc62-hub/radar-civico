@@ -270,11 +270,17 @@ async function runComparison() {
 }
 const defaultPreferences = {theme:'dark',accent:'cyan',density:'comfortable',motion:true};
 function readPreferences() {
-  try { return {...defaultPreferences,...JSON.parse(localStorage.getItem('radar-preferences') || '{}')}; }
-  catch(error) { return {...defaultPreferences}; }
+  try {
+    const stored=JSON.parse(localStorage.getItem('radar-preferences') || '{}');
+    const legacyTheme=localStorage.getItem('radar-theme');
+    return {...defaultPreferences,...stored,theme:stored.theme || (['dark','light'].includes(legacyTheme)?legacyTheme:defaultPreferences.theme)};
+  } catch(error) { return {...defaultPreferences}; }
 }
 function savePreferences() {
-  try { localStorage.setItem('radar-preferences',JSON.stringify(state.preferences)); } catch(error) {}
+  try {
+    localStorage.setItem('radar-preferences',JSON.stringify(state.preferences));
+    if(state.preferences.theme==='dark'||state.preferences.theme==='light')localStorage.setItem('radar-theme',state.preferences.theme);
+  } catch(error) {}
 }
 state.preferences = readPreferences();
 function applyTheme(mode) {
