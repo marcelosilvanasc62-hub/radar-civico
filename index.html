@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101c2d">
+  <meta name="theme-color" content="#101419">
   <meta name="description" content="Radar Cívico — acompanhe dados públicos da atividade parlamentar brasileira.">
   <title>Radar Cívico | Transparência em movimento</title>
   <link rel="preconnect" href="https://dadosabertos.camara.leg.br">
-  <link rel="stylesheet" href="styles.css?v=4">
-  <script src="app.js?v=4" defer></script>
+  <link rel="stylesheet" href="styles.css?v=5">
+  <script src="app.js?v=5" defer></script>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#" aria-label="Radar Cívico - início">
-      <span class="brand-mark">RC</span>
-      <span><strong>RADAR CÍVICO</strong><small>TRANSPARÊNCIA EM MOVIMENTO</small></span>
+      <span class="brand-mark" aria-hidden="true">◉</span>
+      <span><strong>RADAR CÍVICO</strong><small>INTELIGÊNCIA PÚBLICA</small></span>
     </a>
     <nav class="topnav" aria-label="Navegação principal">
       <a class="active" href="#visao-geral">Visão geral</a>
@@ -25,22 +25,31 @@
     </nav>
     <div class="top-actions">
       <span class="live-dot"></span><span class="live-label">DADOS PÚBLICOS</span>
+      <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Abrir navegação" aria-expanded="false" title="Abrir navegação">☰</button>
       <button id="themeToggle" class="theme-toggle" type="button" aria-label="Ativar modo noturno" title="Alternar tema"><span class="theme-icon">☾</span><span class="theme-text">Tema escuro</span></button>
+      <details class="appearance-settings"><summary aria-label="Personalizar aparência">Personalizar</summary><div class="appearance-popover"><label>Tema<select id="themeSelect"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Automático</option></select></label><label>Cor de destaque<select id="accentSelect"><option value="cyan">Ciano</option><option value="lime">Verde-limão</option><option value="violet">Violeta</option><option value="orange">Laranja</option><option value="blue">Azul</option><option value="pink">Rosa</option></select></label><label>Densidade<select id="densitySelect"><option value="comfortable">Confortável</option><option value="compact">Compacta</option><option value="auto">Automática</option></select></label><label class="motion-option"><input id="motionToggle" type="checkbox" checked> Animações ativadas</label></div></details>
       <button id="refreshBtn" class="refresh-btn" type="button" title="Atualizar dados">↻ <span>Atualizar</span></button>
     </div>
   </header>
-
+  <div id="drawerBackdrop" class="drawer-backdrop" hidden></div>
+  <aside id="sideDrawer" class="side-drawer" aria-hidden="true" aria-label="Navegação complementar">
+    <div class="drawer-heading"><strong>RADAR CÍVICO</strong><button id="drawerClose" type="button" aria-label="Fechar navegação">×</button></div>
+    <span class="drawer-label">EXPLORAR</span>
+    <a href="#visao-geral">Visão geral</a><a href="#parlamentares">Parlamentares</a><a href="#comparar">Comparador</a><a href="#proposicoes">Proposições</a><a href="#votacoes">Votações</a>
+    <span class="drawer-label">FONTES</span><a href="https://dadosabertos.camara.leg.br/" target="_blank" rel="noopener">Dados Abertos da Câmara ↗</a>
+    <p>Dados públicos. Fontes verificáveis. Independência editorial.</p>
+  </aside>
   <main class="shell">
     <section class="hero" id="visao-geral">
       <div class="hero-copy">
-        <div class="eyebrow"><span></span> MONITORAMENTO LEGISLATIVO</div>
-        <h1>O que acontece<br><em>em Brasília</em> importa.</h1>
-        <p>Acompanhe a atividade parlamentar com dados públicos, fontes verificáveis e contexto para entender as decisões que afetam o país.</p>
+        <div class="eyebrow"><span></span> INTELIGÊNCIA PÚBLICA · BRASIL</div>
+        <h1>O poder público<br><em>sob análise.</em></h1>
+        <p>Acompanhe, compare e fiscalize a atividade parlamentar com dados públicos, fontes verificáveis e contexto.</p>
         <a class="hero-link" href="#parlamentares">Explorar dados <span>→</span></a>
       </div>
       <div class="hero-visual" aria-hidden="true">
         <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-        <div class="radar-center"><span>RC</span></div>
+        <div class="radar-center"><span>RADAR</span></div>
         <span class="radar-point point-a"></span><span class="radar-point point-b"></span><span class="radar-point point-c"></span>
         <div class="visual-label label-a">DADOS ABERTOS <b>●</b></div>
         <div class="visual-label label-b">ACOMPANHAMENTO <b>●</b></div>
@@ -88,7 +97,7 @@
       <div id="comparisonResults" class="comparison-results" aria-live="polite">
         <div class="comparison-placeholder"><span>↔</span><strong>Escolha dois parlamentares</strong><p>O resultado aparecerá aqui, com valores, diferenças e gráfico comparativo.</p></div>
       </div>
-      <p class="comparison-note">Os resultados dependem da disponibilidade e da atualização dos registros da Câmara. Despesas consideram os valores líquidos quando informados. Proposições aprovadas só serão contabilizadas quando a situação estiver identificada no registro consultado; autoria compartilhada pode existir.</p>
+      <p class="comparison-note">Os resultados dependem da disponibilidade e atualização dos registros da Câmara. Despesas consideram valores líquidos quando informados. A situação das proposições é verificada individualmente em uma amostra; autoria compartilhada pode existir.</p>
     </section>
 
     <section class="content-grid">
@@ -121,7 +130,7 @@
     </section>
   </main>
 
-  <footer><span>© 2026 Radar Cívico</span><span>Independente • Apartidário • Baseado em dados públicos</span><a href="https://github.com/marcelosilvanasc62-hub/radar-civico" target="_blank" rel="noopener">Código aberto no GitHub ↗</a></footer>
+  <footer><span>© 2026 Radar Cívico · Projeto independente</span><span>Independente • Apartidário • Baseado em dados públicos</span><a href="https://github.com/marcelosilvanasc62-hub/radar-civico" target="_blank" rel="noopener">Código aberto no GitHub ↗</a></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
