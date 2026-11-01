@@ -6,7 +6,7 @@
   <title>Radar Cívico — Dados legislativos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <header class="site-header">
@@ -49,10 +49,23 @@
       <article class="profile-panel"><div class="panel-heading"><div><span class="eyebrow">PRODUÇÃO LEGISLATIVA</span><h3>Proposições de autoria</h3></div><span class="panel-unit">REGISTROS CONSULTADOS</span></div><div id="proposalsSummary" class="metric-summary">Consultando…</div><p class="method-caption">Quantidade de proposições retornadas no endpoint individual de autoria. A consulta não atribui peso, mérito ou resultado às matérias.</p><a class="source-link" href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank" rel="noopener">Fonte e documentação da API ↗</a></article>
       <article class="profile-panel contact-panel"><div class="panel-heading"><div><span class="eyebrow">CANAIS INSTITUCIONAIS</span><h3>Contato do gabinete</h3></div></div><div id="contactDetails" class="contact-details">Consultando dados oficiais…</div><p class="method-caption">Informações de contato conforme cadastro institucional da Câmara dos Deputados.</p></article>
     </div>
+    <article class="profile-panel amendments-panel"><div class="panel-heading"><div><span class="eyebrow">RECURSOS ORÇAMENTÁRIOS</span><h3>Emendas parlamentares e execução</h3></div><span class="panel-unit">FONTE FEDERAL</span></div><p class="method-caption">A consulta detalhada de emendas, documentos de empenho, liquidação e pagamento é mantida pelo Portal da Transparência e pelo Transferegov. Para evitar atribuições incorretas, esta ficha não presume autoria ou destino municipal sem vínculo documental validado.</p><div class="amendment-filters"><label class="filter-label" for="amendmentMunicipality">MUNICÍPIO BENEFICIADO<input id="amendmentMunicipality" type="search" placeholder="Ex.: Sobral"></label><button id="openAmendments" class="secondary-button" type="button">Consultar emendas ↗</button></div><div id="amendmentLinks" class="amendment-links"></div><div class="source-list"><a href="https://portaldatransparencia.gov.br/emendas/consulta" target="_blank" rel="noopener">Consulta de emendas parlamentares ↗</a><a href="https://portaldatransparencia.gov.br/emendas/consulta-por-documento" target="_blank" rel="noopener">Documentos de despesa (empenho, liquidação e pagamento) ↗</a><a href="https://api-publica.transferegov.gestao.gov.br/" target="_blank" rel="noopener">API pública do Transferegov ↗</a></div></article>
     <div class="profile-footnote"><strong>Como ler esta ficha</strong><p>Os gráficos refletem os registros disponíveis na consulta e no período indicado. Ausência de registro não deve ser interpretada automaticamente como ausência de atividade. Consulte os links oficiais para conferir dados, critérios e eventuais atualizações.</p></div>
+  </section>
+  <section id="institutionalAgenda" class="public-section">
+    <div class="section-heading"><div><div class="eyebrow">03 / AGENDA INSTITUCIONAL</div><h2>Calendário da Câmara</h2></div><a class="source-link" href="https://www.camara.leg.br/agenda" target="_blank" rel="noopener">Agenda oficial ↗</a></div>
+    <p class="section-intro">Reuniões, sessões e eventos cadastrados na API de Dados Abertos. Horários e pautas dependem da atualização institucional.</p>
+    <div class="agenda-toolbar"><label class="filter-label" for="agendaDays">PERÍODO<select id="agendaDays"><option value="7">Próximos 7 dias</option><option value="14">Próximos 14 dias</option><option value="30">Próximos 30 dias</option></select></label><button id="refreshAgenda" class="secondary-button" type="button">Atualizar agenda ↻</button></div>
+    <div id="agendaStatus" class="status">Consultando eventos oficiais…</div><div id="agendaList" class="agenda-list"></div>
+  </section>
+  <section id="newsSection" class="public-section">
+    <div class="section-heading"><div><div class="eyebrow">04 / ATUALIZAÇÕES INSTITUCIONAIS</div><h2>Notícias factuais</h2></div><a class="source-link" href="https://www.camara.leg.br/noticias/rss" target="_blank" rel="noopener">RSS Agência Câmara ↗</a></div>
+    <p class="section-intro">Manchetes distribuídas pela Agência Câmara. O conteúdo é apresentado como publicação institucional, sem interpretação editorial do Radar Cívico.</p>
+    <div class="news-filters" role="group" aria-label="Filtrar notícias"><button class="tag-filter active" data-news-filter="Todas">Todas</button><button class="tag-filter" data-news-filter="Orçamento">#Orçamento</button><button class="tag-filter" data-news-filter="Projetos">#Projetos</button><button class="tag-filter" data-news-filter="Fiscalização">#Fiscalização</button><button class="tag-filter" data-news-filter="Comissões">#Comissões</button></div>
+    <div id="newsStatus" class="status">Carregando feed institucional…</div><div id="newsList" class="news-list"></div>
   </section>
   <section class="method-note"><span class="eyebrow">NOTA METODOLÓGICA</span><p>Os resultados são apresentados conforme os campos disponibilizados pela instituição de origem. Cores são recursos de identificação visual de siglas partidárias, não representam avaliação ou classificação. A busca da Câmara respeita o limite de 100 registros por requisição da API.</p></section>
 </main>
 <footer><div class="footer-brand">RADAR CÍVICO</div><p>Projeto independente de consulta a informações públicas. Não representa a Câmara dos Deputados, o Senado Federal ou qualquer partido.</p><div class="footer-links"><a href="https://dadosabertos.camara.leg.br/swagger/api.html">API da Câmara ↗</a><a href="https://www12.senado.leg.br/dados-abertos">Dados Abertos do Senado ↗</a></div><small>Fontes institucionais · Consulta em <span id="updatedAt">—</span></small></footer>
-<script src="app.js?v=2" defer></script>
+<script src="app.js?v=3" defer></script>
 </body></html>
